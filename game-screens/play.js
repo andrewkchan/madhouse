@@ -12,8 +12,8 @@ var playState = {
   player_speed: 0,
   player_speed_bonus: 9,
   tile_size: 8,
-  width: 128,
-  height: 128,
+  width: 256,
+  height: 144,
   home_location: null,
   milk_required: 3,
   milk_found: 0,
@@ -97,6 +97,7 @@ var playState = {
     this.player.animations.add('idle_left', [68, 69, 70], 4, true);
     this.player.animations.add('idle_down', [46, 47, 48], 4, true);
     this.player.animations.add('idle_up', [29, 30, 31], 4, true);
+    this.player.animations.add('fall', [86, 87, 88, 89], 10, false);
 
     this.groupElements.add( this.player );
 
@@ -121,6 +122,10 @@ var playState = {
       };
     }).call(this);
     this.playerStateMachine.pushState(PlayerStateFactory.IDLE());
+
+    // player weapon
+    this.playerWeapon = this.player.addChild(game.make.sprite(6, 2, 'revolver'));
+    this.playerHand = this.player.addChild(game.make.sprite(5, 8, 'convict_hand'));
 
     // baby thought bubble
     this.baby_thought = this.game.add.sprite( 0, 0, 'baby-thoughts' );
@@ -179,11 +184,6 @@ var playState = {
     this.milk_found = 0;
     this.game_over = false;
     this.display_scroll = false;
-
-    // share button
-    this.share = this.game.add.sprite( 0, 0, 'share' );
-    this.share.inputEnabled = true;
-    this.groupElements.add( this.share );
 
     // load level
     this.load_map();
@@ -448,7 +448,13 @@ var playState = {
     // setup map
     this.map = game.add.tilemap( 'map1' );
     this.map.addTilesetImage( 'tiles' );
-    this.map.setCollisionBetween( 1, 32 );
+    this.map.setCollision([1, 2, 4, 5, 6, 7, 8, 14, 15, 16, 22, 23, 24, 29, 30, 31, 12]);
+    // water collision detection
+    this.map.setTileIndexCallback(
+      [3, 9, 10, 11, 12, 13, 17, 18, 19, 20, 21, 25, 26, 27, 28],
+      this.fall_in_pit,
+      this
+    );
 
     // add map layers
     this.layer = this.map.createLayer( 'tiles' );
@@ -488,6 +494,7 @@ var playState = {
 
       // position camera
       game.camera.follow(this.player);
+      game.camera.bounds = null;
     }
 
     // position baby
@@ -503,19 +510,6 @@ var playState = {
       this.baby_thought.y = this.baby.y - 11;
     }
 
-    // share button
-    var share_position = this.findObjectsByType( 'share', this.map, 'objects' );
-
-    if ( share_position[0] ) {
-      // use the first result - there should only be 1 start point per level
-      // if there isn't we'll just ignore the others
-      this.share.x = share_position[0].x;
-      this.share.y = share_position[0].y;
-    }
-
-    // home location
-    this.home_location = this.findObjectsByType( 'home', this.map, 'overlay' );
-    this.home_location = this.home_location[0];
 
     // enable keys
     this.groupKeys.forEach(
@@ -598,7 +592,6 @@ var playState = {
    * Change baby so that he is happy, and add a go home message, and maybe some other decorations in the house
    */
   milk_collected: function() {
-    this.house_party();
     this.baby.animations.play( 'happy' );
     this.baby_thought.frame = 0;
 
@@ -629,6 +622,22 @@ var playState = {
     emitter.start( false, 1500, 70 );
   },
 
+  fall_in_pit: function(sprite, tile) {
+    if (tile.containsPoint(sprite.body.center.x, sprite.body.center.y)) {
+      if (sprite === this.player) {
+        var currentState = this.playerStateMachine.peekState();
+        if (currentState.name !== "FALL" && currentState.name !== "ROLL") {
+          var fallToDeathState =
+            PlayerStateFactory.FALL(function() {
+              this.game_lost();
+            }, this);
+          this.playerStateMachine.popState();
+          this.playerStateMachine.pushState(fallToDeathState);
+        }
+      }
+    }
+  },
+
 
   /**
    * Game completed. Now we can stop the timer and let the user wander around the world
@@ -644,15 +653,15 @@ var playState = {
    * Game over - have to try again
    */
   game_lost: function() {
-    this.overlay_new( 'Too Slow :(', 1000, 1 );
+    this.overlay_new( 'You lost :(', 1000, 1 );
 
     this.game_over = true;
 
-    // quit to menu
+    // restart
     game.time.events.add(
-        Phaser.Timer.SECOND * 5,
+        Phaser.Timer.SECOND * 2,
         function() {
-            game.state.start( 'menu' );
+            game.state.start( 'play' );
         },
         this
     );
@@ -666,11 +675,9 @@ var playState = {
     // if all milk is collected
     if ( this.milk_found >= this.milk_required ) {
       // if player is in home
-      if ( this.player.x > this.home_location.x && this.player.x < this.home_location.x + this.home_location.width ) {
-        if ( this.player.y > this.home_location.y && this.player.y < this.home_location.y + this.home_location.height ) {
-          this.game_finished();
-          this.message_new( 'Yay!' );
-        }
+      if ( false ) {
+        this.game_finished();
+        this.message_new( 'Yay!' );
       }
     }
   },
@@ -769,7 +776,7 @@ var PlayerStateFactory = {
           return;
         } else if (isRolling) {
           playerStateMachine.popState();
-          playerStateMachine.pushState(PlayerStateFactory.ROLL());
+          playerStateMachine.pushState(PlayerStateFactory.ROLL(velocityX, velocityY));
           return;
         }
         // reduce speed if moving diagonally so that we don't move super quickly
@@ -799,20 +806,18 @@ var PlayerStateFactory = {
       },
     };
   },
-  ROLL: function() {
-    var velocityX = 0;
-    var velocityY = 0;
+  ROLL: function(moveX, moveY) {
     var speed = 130;
+    if (moveX && moveY) {
+      speed *= 0.66;
+    }
+    var velocityX = Math.sign(moveX) * speed;
+    var velocityY = Math.sign(moveY) * speed;
     var rollAnimation = null;
     return {
       name: "ROLL",
       isComplete: false,
       enter: function(player) {
-        if (player.body.velocity.x && player.body.velocity.y) {
-          speed *= 0.66;
-        }
-        velocityX = Math.sign(player.body.velocity.x) * speed;
-        velocityY = Math.sign(player.body.velocity.y) * speed;
         player.body.velocity.x = velocityX;
         player.body.velocity.y = velocityY;
         var animName = "roll_right";
@@ -836,7 +841,7 @@ var PlayerStateFactory = {
       update: function(player, playerStateMachine) {
         if (this.isComplete) {
           playerStateMachine.popState();
-          playerStateMachine.pushState(PlayerStateFactory.RECOVER());
+          playerStateMachine.pushState(PlayerStateFactory.RECOVER(velocityX, velocityY));
           return;
         }
       },
@@ -845,20 +850,18 @@ var PlayerStateFactory = {
       },
     };
   },
-  RECOVER: function() {
-    var velocityX = 0;
-    var velocityY = 0;
+  RECOVER: function(moveX, moveY) {
     var speed = 50;
+    if (moveX && moveY) {
+      speed *= 0.66;
+    }
+    var velocityX = Math.sign(moveX) * speed;
+    var velocityY = Math.sign(moveY) * speed;
     var recoverAnimation = null;
     return {
       name: "RECOVER",
       isComplete: false,
       enter: function(player) {
-        if (player.body.velocity.x && player.body.velocity.y) {
-          speed *= 0.66;
-        }
-        velocityX = Math.sign(player.body.velocity.x) * speed;
-        velocityY = Math.sign(player.body.velocity.y) * speed;
         player.body.velocity.x = velocityX;
         player.body.velocity.y = velocityY;
         var animName = "recover_right";
@@ -891,4 +894,22 @@ var PlayerStateFactory = {
       },
     };
   },
+  FALL: function(onComplete, onCompleteContext) {
+    return {
+      name: "FALL",
+      enter: function(player) {
+        player.body.velocity.x = 0;
+        player.body.velocity.y = 0;
+        player.animations.play("fall");
+        player.animations.currentAnim.onComplete.addOnce(onComplete, onCompleteContext);
+        return;
+      },
+      handleInput: function(keyboard) {
+        return;
+      },
+      update: function(player, playerStateMachine) {
+        return;
+      },
+    };
+  }
 };

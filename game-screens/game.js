@@ -4,7 +4,7 @@
 // iphone portrait = 375 x 667
 // iphone portrait = 667 x 375
 
-var game = new Phaser.Game( 128, 128, Phaser.CANVAS, '', null, false, false );
+var game = new Phaser.Game( 256, 144, Phaser.CANVAS, '', null, false, false );
 
 // Our 'global' variable
 game.global = {

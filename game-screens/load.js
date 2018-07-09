@@ -35,6 +35,8 @@ var loadState = {
         game.load.spritesheet( 'baby', 'images/baby.png', 12, 15 );
         game.load.spritesheet( 'baby-thoughts', 'images/baby-thoughts.png', 10, 10 );
         game.load.spritesheet( 'tilemap', 'images/tiles.png', 8, 8 );
+        game.load.image('revolver', 'images/revolver.png');
+        game.load.image('convict_hand', 'images/convict_hand.png');
 
         //game.load.image( 'enemy', 'images/enemy.png' );
 
