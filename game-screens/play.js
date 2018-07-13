@@ -59,7 +59,7 @@ var playState = {
     game.physics.arcade.TILE_BIAS = 8;
 
     // cursor controls
-    this.keyboard = this.game.input.keyboard;
+    game.input.mouse.capture = true;
 
     // setup baby
     this.baby = this.game.add.sprite( 0, 0, 'baby' );
@@ -82,23 +82,28 @@ var playState = {
     this.player._weaponHandR = this.player.addChild(game.make.sprite(4, 8, 'empty_convict_hand'));
     this.player._weaponHandR.anchor.setTo(0.5, 0.5);
     this.player._weaponHandR.pivot.x = -4;
-    this.player._weaponHandR._weapon = this.player._weaponHandR.addChild(game.make.sprite(0, 0, 'revolver'));
-    this.player._weaponHandR._weapon.anchor.set(0.15, 0.8);
+    this.player._weaponHandR._gun = this.player._weaponHandR.addChild(game.make.sprite(0, 0, 'revolver'));
+    this.player._weaponHandR._gun.anchor.set(0.15, 0.8);
     this.player._weaponHandR._hand = this.player._weaponHandR.addChild(game.make.sprite(0, 0, 'convict_hand'));
     this.player._weaponHandR._hand.anchor.setTo(0.5, 0.5);
 
     this.player._weaponHandL = this.player.addChild(game.make.sprite(-3, 8, 'empty_convict_hand'));
     this.player._weaponHandL.anchor.setTo(0.5, 0.5);
     this.player._weaponHandL.pivot.x = -3;
-    this.player._weaponHandL._weapon = this.player._weaponHandL.addChild(game.make.sprite(0, 0, 'revolver_flipped'));
-    this.player._weaponHandL._weapon.anchor.set(0.15, 0.2);
+    this.player._weaponHandL._gun = this.player._weaponHandL.addChild(game.make.sprite(0, 0, 'revolver_flipped'));
+    this.player._weaponHandL._gun.anchor.set(0.15, 0.2);
     this.player._weaponHandL._hand = this.player._weaponHandL.addChild(game.make.sprite(0, 0, 'convict_hand'));
     this.player._weaponHandL._hand.anchor.setTo(0.5, 0.5);
     this.player._weaponHandL.visible = false;
     // player visible sprite
     this.player._main = this.player.addChild(game.make.sprite(0, 0, 'convict'));
     this.player._main.anchor.setTo( 0.5, 0.5 );
-    //this.player.swapChildren(this.player._weaponHandR, this.player._main);
+    // the weapon gameobject
+    this.player._weapon = game.add.weapon(-1, "particle");
+    this.player._weapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
+    this.player._weapon.bulletSpeed = 400;
+    this.player._weapon.fireRate = 0.5;
+    this.player._weapon.trackSprite(this.player._weaponHandR._gun, 12, -8, true);
 
     // player animations
     this.player._main.animations.add('down', [18, 19, 20, 21, 22], 12, true);
@@ -122,7 +127,7 @@ var playState = {
     this.groupElements.add( this.player );
 
     game.physics.arcade.enable( this.player );
-    this.player.body.setSize( 6, 10, 0, 10 );
+    this.player.body.setSize( 8, 12, 9, 19 );
     this.player.body.tilePadding.set( 12, 12 );
 
     this.playerStateMachine = (function() {
@@ -714,6 +719,8 @@ var PlayerStateFactory = {
     var idleAnimation = "idle_down";
     var isRunning = false;
     var cursorAngle = 0.0;
+    var isFiring = false;
+    var activePointer = null;
     return {
       name: "IDLE",
       enter: function(player) {
@@ -732,18 +739,11 @@ var PlayerStateFactory = {
         player.body.velocity.y = 0;
       },
       handleInput: function(input) {
-        var keyboard = input.keyboard;
-
         cursorAngle = GameInputUtil.getCursorAngle(input);
         // take care of character movement --> enter run state
-        if (
-          keyboard.isDown(Phaser.KeyCode.W) ||
-          keyboard.isDown(Phaser.KeyCode.S) ||
-          keyboard.isDown(Phaser.KeyCode.A) ||
-          keyboard.isDown(Phaser.KeyCode.D)
-        ) {
-          isRunning = true;
-        }
+        isRunning = GameInputUtil.isMoving(input);
+        isFiring = GameInputUtil.isFiring(input);
+        activePointer = input.activePointer;
       },
       update: function(player, playerStateMachine) {
         if (isRunning) {
@@ -753,6 +753,9 @@ var PlayerStateFactory = {
           idleAnimation = "idle_" + PlayerAnimUtil.getDirectionString(cursorAngle);
           PlayerAnimUtil.updateWeaponHand(player, cursorAngle);
           player._main.animations.play(idleAnimation);
+          if (isFiring && activePointer) {
+            player._weapon.fireAtPointer(activePointer);
+          }
         }
       },
     };
@@ -763,7 +766,7 @@ var PlayerStateFactory = {
     var speed = playState.player_speed;
     var isRolling = false;
     var cursorAngle = 0.0;
-
+    var activePointer = null;
     return {
       name: "RUN",
       enter: function(player) {
@@ -792,6 +795,9 @@ var PlayerStateFactory = {
         if (keyboard.isDown(Phaser.KeyCode.SPACEBAR)) {
           isRolling = true;
         }
+
+        // firing
+        isFiring = GameInputUtil.isFiring(input);
       },
       update: function(player, playerStateMachine) {
         if (velocityX === 0 && velocityY === 0) {
@@ -815,6 +821,9 @@ var PlayerStateFactory = {
         var moveAnimation = PlayerAnimUtil.getDirectionString(cursorAngle);
         PlayerAnimUtil.updateWeaponHand(player, cursorAngle);
         player._main.animations.play(moveAnimation);
+        if (isFiring && activePointer) {
+          player._weapon.fireAtPointer(activePointer);
+        }
       },
     };
   },
@@ -846,6 +855,7 @@ var PlayerStateFactory = {
         }
         rollAnimation = player._main.animations.play(animName);
         player._main.animations.currentAnim.onComplete.addOnce(this.onComplete, this);
+        PlayerAnimUtil.updateWeaponHand(player, 0, false);
       },
       handleInput: function(input) {
         return;
@@ -856,7 +866,6 @@ var PlayerStateFactory = {
           playerStateMachine.pushState(PlayerStateFactory.RECOVER(velocityX, velocityY));
           return;
         }
-        PlayerAnimUtil.updateWeaponHand(player, 0, false);
       },
       onComplete: function() {
         this.isComplete = true;
@@ -891,6 +900,7 @@ var PlayerStateFactory = {
         }
         recoverAnimation = player._main.animations.play(animName);
         player._main.animations.currentAnim.onComplete.addOnce(this.onComplete, this);
+        PlayerAnimUtil.updateWeaponHand(player, 0, false);
       },
       handleInput: function(input) {
         return;
@@ -901,7 +911,6 @@ var PlayerStateFactory = {
           playerStateMachine.pushState(PlayerStateFactory.IDLE());
           return;
         }
-        PlayerAnimUtil.updateWeaponHand(player, 0, false);
       },
       onComplete: function() {
         this.isComplete = true;
@@ -916,6 +925,7 @@ var PlayerStateFactory = {
         player.body.velocity.y = 0;
         player._main.animations.play("fall");
         player._main.animations.currentAnim.onComplete.addOnce(onComplete, onCompleteContext);
+        PlayerAnimUtil.updateWeaponHand(player, 0, false);
         return;
       },
       handleInput: function(input) {
@@ -941,6 +951,17 @@ var GameInputUtil = {
       x: input.x - game.width/2,
       y: input.y - game.height/2
     };
+  },
+  isFiring: function(input) {
+    return input.activePointer.leftButton.isDown;
+  },
+  isMoving: function(input) {
+    return Boolean(
+      input.keyboard.isDown(Phaser.KeyCode.W) ||
+      input.keyboard.isDown(Phaser.KeyCode.S) ||
+      input.keyboard.isDown(Phaser.KeyCode.A) ||
+      input.keyboard.isDown(Phaser.KeyCode.D)
+    );
   },
 };
 
