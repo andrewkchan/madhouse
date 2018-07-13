@@ -102,7 +102,7 @@ var playState = {
     this.player._weapon = game.add.weapon(-1, "particle");
     this.player._weapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
     this.player._weapon.bulletSpeed = 400;
-    this.player._weapon.fireRate = 0.5;
+    this.player._weapon.fireRate = 5;
     this.player._weapon.trackSprite(this.player._weaponHandR._gun, 12, -8, true);
 
     // player animations
@@ -147,6 +147,9 @@ var playState = {
       };
     }).call(this);
     this.playerStateMachine.pushState(PlayerStateFactory.IDLE());
+    game.input.onDown.add(function() {
+      this.playerStateMachine.peekState().onFire(this.player, game.input);
+    }, this);
 
     // baby thought bubble
     this.baby_thought = this.game.add.sprite( 0, 0, 'baby-thoughts' );
@@ -720,7 +723,6 @@ var PlayerStateFactory = {
     var isRunning = false;
     var cursorAngle = 0.0;
     var isFiring = false;
-    var activePointer = null;
     return {
       name: "IDLE",
       enter: function(player) {
@@ -742,8 +744,6 @@ var PlayerStateFactory = {
         cursorAngle = GameInputUtil.getCursorAngle(input);
         // take care of character movement --> enter run state
         isRunning = GameInputUtil.isMoving(input);
-        isFiring = GameInputUtil.isFiring(input);
-        activePointer = input.activePointer;
       },
       update: function(player, playerStateMachine) {
         if (isRunning) {
@@ -753,10 +753,10 @@ var PlayerStateFactory = {
           idleAnimation = "idle_" + PlayerAnimUtil.getDirectionString(cursorAngle);
           PlayerAnimUtil.updateWeaponHand(player, cursorAngle);
           player._main.animations.play(idleAnimation);
-          if (isFiring && activePointer) {
-            player._weapon.fireAtPointer(activePointer);
-          }
         }
+      },
+      onFire: function(player, input) {
+        player._weapon.fireAtPointer(input.activePointer);
       },
     };
   },
@@ -766,7 +766,6 @@ var PlayerStateFactory = {
     var speed = playState.player_speed;
     var isRolling = false;
     var cursorAngle = 0.0;
-    var activePointer = null;
     return {
       name: "RUN",
       enter: function(player) {
@@ -795,9 +794,6 @@ var PlayerStateFactory = {
         if (keyboard.isDown(Phaser.KeyCode.SPACEBAR)) {
           isRolling = true;
         }
-
-        // firing
-        isFiring = GameInputUtil.isFiring(input);
       },
       update: function(player, playerStateMachine) {
         if (velocityX === 0 && velocityY === 0) {
@@ -821,9 +817,9 @@ var PlayerStateFactory = {
         var moveAnimation = PlayerAnimUtil.getDirectionString(cursorAngle);
         PlayerAnimUtil.updateWeaponHand(player, cursorAngle);
         player._main.animations.play(moveAnimation);
-        if (isFiring && activePointer) {
-          player._weapon.fireAtPointer(activePointer);
-        }
+      },
+      onFire: function(player, input) {
+        player._weapon.fireAtPointer(input.activePointer);
       },
     };
   },
