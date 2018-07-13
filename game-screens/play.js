@@ -59,7 +59,6 @@ var playState = {
     game.physics.arcade.TILE_BIAS = 8;
 
     // cursor controls
-    this.cursor = this.game.input.keyboard.createCursorKeys();
     this.keyboard = this.game.input.keyboard;
 
     // setup baby
@@ -74,30 +73,51 @@ var playState = {
 
     // setup player
     // TODO: set character start position in level parameters
-    // this.player = this.game.add.sprite( 0, 0, 'player' );
-    this.player = this.game.add.sprite(0, 0, 'convict');
+    this.player = this.game.add.sprite(0, 0, 'empty_convict'); // invisible sprite as group root
     this.player.anchor.setTo( 0.5, 0.5 );
     this.player.direction = 2;
     this.player.alive = true;
 
+    // player weapon hands and weapon
+    this.player._weaponHandR = this.player.addChild(game.make.sprite(4, 8, 'empty_convict_hand'));
+    this.player._weaponHandR.anchor.setTo(0.5, 0.5);
+    this.player._weaponHandR.pivot.x = -4;
+    this.player._weaponHandR._weapon = this.player._weaponHandR.addChild(game.make.sprite(0, 0, 'revolver'));
+    this.player._weaponHandR._weapon.anchor.set(0.15, 0.8);
+    this.player._weaponHandR._hand = this.player._weaponHandR.addChild(game.make.sprite(0, 0, 'convict_hand'));
+    this.player._weaponHandR._hand.anchor.setTo(0.5, 0.5);
+
+    this.player._weaponHandL = this.player.addChild(game.make.sprite(-3, 8, 'empty_convict_hand'));
+    this.player._weaponHandL.anchor.setTo(0.5, 0.5);
+    this.player._weaponHandL.pivot.x = -3;
+    this.player._weaponHandL._weapon = this.player._weaponHandL.addChild(game.make.sprite(0, 0, 'revolver_flipped'));
+    this.player._weaponHandL._weapon.anchor.set(0.15, 0.2);
+    this.player._weaponHandL._hand = this.player._weaponHandL.addChild(game.make.sprite(0, 0, 'convict_hand'));
+    this.player._weaponHandL._hand.anchor.setTo(0.5, 0.5);
+    this.player._weaponHandL.visible = false;
+    // player visible sprite
+    this.player._main = this.player.addChild(game.make.sprite(0, 0, 'convict'));
+    this.player._main.anchor.setTo( 0.5, 0.5 );
+    //this.player.swapChildren(this.player._weaponHandR, this.player._main);
+
     // player animations
-    this.player.animations.add('down', [18, 19, 20, 21, 22], 12, true);
-    this.player.animations.add('up', [23, 24, 25, 26, 27, 28], 12, true);
-    this.player.animations.add('right', [4, 5, 6, 7, 8], 12, true);
-    this.player.animations.add('left', [72, 73, 74, 75, 76], 12, true);
-    this.player.animations.add('roll_down', [58, 59, 60, 61], 10, false);
-    this.player.animations.add('roll_up', [49, 50, 51, 52], 10, false);
-    this.player.animations.add('roll_right', [9, 10, 11, 12], 10, false);
-    this.player.animations.add('roll_left', [77, 78, 79, 80], 10, false);
-    this.player.animations.add('recover_down', [62, 63, 64], 12, false);
-    this.player.animations.add('recover_up', [53, 54, 55], 12, false);
-    this.player.animations.add('recover_right', [13, 14, 15], 12, false);
-    this.player.animations.add('recover_left', [81, 82, 83], 12, false);
-    this.player.animations.add('idle_right', [0, 1, 2], 4, true);
-    this.player.animations.add('idle_left', [68, 69, 70], 4, true);
-    this.player.animations.add('idle_down', [46, 47, 48], 4, true);
-    this.player.animations.add('idle_up', [29, 30, 31], 4, true);
-    this.player.animations.add('fall', [86, 87, 88, 89], 10, false);
+    this.player._main.animations.add('down', [18, 19, 20, 21, 22], 12, true);
+    this.player._main.animations.add('up', [23, 24, 25, 26, 27, 28], 12, true);
+    this.player._main.animations.add('right', [4, 5, 6, 7, 8], 12, true);
+    this.player._main.animations.add('left', [72, 73, 74, 75, 76], 12, true);
+    this.player._main.animations.add('roll_down', [58, 59, 60, 61], 10, false);
+    this.player._main.animations.add('roll_up', [49, 50, 51, 52], 10, false);
+    this.player._main.animations.add('roll_right', [9, 10, 11, 12], 10, false);
+    this.player._main.animations.add('roll_left', [77, 78, 79, 80], 10, false);
+    this.player._main.animations.add('recover_down', [62, 63, 64], 12, false);
+    this.player._main.animations.add('recover_up', [53, 54, 55], 12, false);
+    this.player._main.animations.add('recover_right', [13, 14, 15], 12, false);
+    this.player._main.animations.add('recover_left', [81, 82, 83], 12, false);
+    this.player._main.animations.add('idle_right', [0, 1, 2], 4, true);
+    this.player._main.animations.add('idle_left', [68, 69, 70], 4, true);
+    this.player._main.animations.add('idle_down', [46, 47, 48], 4, true);
+    this.player._main.animations.add('idle_up', [29, 30, 31], 4, true);
+    this.player._main.animations.add('fall', [86, 87, 88, 89], 10, false);
 
     this.groupElements.add( this.player );
 
@@ -122,10 +142,6 @@ var playState = {
       };
     }).call(this);
     this.playerStateMachine.pushState(PlayerStateFactory.IDLE());
-
-    // player weapon
-    this.playerWeapon = this.player.addChild(game.make.sprite(6, 2, 'revolver'));
-    this.playerHand = this.player.addChild(game.make.sprite(5, 8, 'convict_hand'));
 
     // baby thought bubble
     this.baby_thought = this.game.add.sprite( 0, 0, 'baby-thoughts' );
@@ -194,7 +210,7 @@ var playState = {
    * Update game
    */
   update: function() {
-    this.playerStateMachine.peekState().handleInput(this.keyboard);
+    this.playerStateMachine.peekState().handleInput(this.game.input);
 
     game.physics.arcade.collide( this.player, this.layer );
     game.physics.arcade.collide( this.player, this.groupDoors );
@@ -638,7 +654,6 @@ var playState = {
     }
   },
 
-
   /**
    * Game completed. Now we can stop the timer and let the user wander around the world
    */
@@ -647,7 +662,6 @@ var playState = {
     this.baby_thought.visible = true;
     this.door_open( { key_id: 7 } );
   },
-
 
   /**
    * Game over - have to try again
@@ -666,7 +680,6 @@ var playState = {
         this
     );
   },
-
 
   /**
    * update game settings
@@ -700,6 +713,7 @@ var PlayerStateFactory = {
   IDLE: function() {
     var idleAnimation = "idle_down";
     var isRunning = false;
+    var cursorAngle = 0.0;
     return {
       name: "IDLE",
       enter: function(player) {
@@ -717,7 +731,10 @@ var PlayerStateFactory = {
         player.body.velocity.x = 0;
         player.body.velocity.y = 0;
       },
-      handleInput: function(keyboard) {
+      handleInput: function(input) {
+        var keyboard = input.keyboard;
+
+        cursorAngle = GameInputUtil.getCursorAngle(input);
         // take care of character movement --> enter run state
         if (
           keyboard.isDown(Phaser.KeyCode.W) ||
@@ -733,7 +750,9 @@ var PlayerStateFactory = {
           playerStateMachine.popState();
           playerStateMachine.pushState(PlayerStateFactory.RUN());
         } else {
-          player.animations.play(idleAnimation);
+          idleAnimation = "idle_" + PlayerAnimUtil.getDirectionString(cursorAngle);
+          PlayerAnimUtil.updateWeaponHand(player, cursorAngle);
+          player._main.animations.play(idleAnimation);
         }
       },
     };
@@ -743,15 +762,20 @@ var PlayerStateFactory = {
     var velocityY = 0;
     var speed = playState.player_speed;
     var isRolling = false;
+    var cursorAngle = 0.0;
 
     return {
       name: "RUN",
       enter: function(player) {
         return;
       },
-      handleInput: function(keyboard) {
+      handleInput: function(input) {
+        var keyboard = input.keyboard;
         velocityX = 0;
         velocityY = 0;
+
+        cursorAngle = GameInputUtil.getCursorAngle(input);
+
         // take care of character movement
         if ( keyboard.isDown(Phaser.KeyCode.W) ) {
           velocityY = -speed;
@@ -788,21 +812,9 @@ var PlayerStateFactory = {
           player.body.velocity.y = velocityY;
         }
 
-        var moveAnimation = "right";
-
-        if (velocityY > 0) {
-          moveAnimation = "down";
-        } else if (velocityY < 0) {
-          moveAnimation = "up";
-        }
-
-        if (velocityX > 0) {
-          moveAnimation = "right";
-        } else if (velocityX < 0) {
-          moveAnimation = "left";
-        }
-
-        player.animations.play(moveAnimation);
+        var moveAnimation = PlayerAnimUtil.getDirectionString(cursorAngle);
+        PlayerAnimUtil.updateWeaponHand(player, cursorAngle);
+        player._main.animations.play(moveAnimation);
       },
     };
   },
@@ -832,10 +844,10 @@ var PlayerStateFactory = {
         } else if (velocityX < 0) {
           animName = "roll_left";
         }
-        rollAnimation = player.animations.play(animName);
-        player.animations.currentAnim.onComplete.addOnce(this.onComplete, this);
+        rollAnimation = player._main.animations.play(animName);
+        player._main.animations.currentAnim.onComplete.addOnce(this.onComplete, this);
       },
-      handleInput: function(keyboard) {
+      handleInput: function(input) {
         return;
       },
       update: function(player, playerStateMachine) {
@@ -844,6 +856,7 @@ var PlayerStateFactory = {
           playerStateMachine.pushState(PlayerStateFactory.RECOVER(velocityX, velocityY));
           return;
         }
+        PlayerAnimUtil.updateWeaponHand(player, 0, false);
       },
       onComplete: function() {
         this.isComplete = true;
@@ -876,10 +889,10 @@ var PlayerStateFactory = {
         } else if (velocityX < 0) {
           animName = "recover_left";
         }
-        recoverAnimation = player.animations.play(animName);
-        player.animations.currentAnim.onComplete.addOnce(this.onComplete, this);
+        recoverAnimation = player._main.animations.play(animName);
+        player._main.animations.currentAnim.onComplete.addOnce(this.onComplete, this);
       },
-      handleInput: function(keyboard) {
+      handleInput: function(input) {
         return;
       },
       update: function(player, playerStateMachine) {
@@ -888,6 +901,7 @@ var PlayerStateFactory = {
           playerStateMachine.pushState(PlayerStateFactory.IDLE());
           return;
         }
+        PlayerAnimUtil.updateWeaponHand(player, 0, false);
       },
       onComplete: function() {
         this.isComplete = true;
@@ -900,16 +914,78 @@ var PlayerStateFactory = {
       enter: function(player) {
         player.body.velocity.x = 0;
         player.body.velocity.y = 0;
-        player.animations.play("fall");
-        player.animations.currentAnim.onComplete.addOnce(onComplete, onCompleteContext);
+        player._main.animations.play("fall");
+        player._main.animations.currentAnim.onComplete.addOnce(onComplete, onCompleteContext);
         return;
       },
-      handleInput: function(keyboard) {
+      handleInput: function(input) {
         return;
       },
       update: function(player, playerStateMachine) {
         return;
       },
     };
+  }
+};
+
+var GameInputUtil = {
+  getCursorAngle: function(input) {
+    // get the angle of the cursor (in radians) relative to the center of the screen
+    // note since positive y is "down", down means a positive angle.
+    var relPos = this.getCursorRelativePosition(input);
+    return Math.atan2(relPos.y, relPos.x);
+  },
+  getCursorRelativePosition: function(input) {
+    // get the {x, y} coordinates of the cursor relative to the center of the screen
+    return {
+      x: input.x - game.width/2,
+      y: input.y - game.height/2
+    };
+  },
+};
+
+var PlayerAnimUtil = {
+  getDirectionString: function(angle) {
+    if (MathUtil.isDown(angle)) {
+      return "down";
+    } else if (MathUtil.isRight(angle)) {
+      return "right";
+    } else if (MathUtil.isUp(angle)) {
+      return "up";
+    } else {
+      return "left";
+    }
+  },
+  updateWeaponHand: function(player, angle, isVisible = true) {
+    player._weaponHandL.visible = false;
+    player._weaponHandR.visible = false;
+    if (isVisible) {
+      if (MathUtil.isDown(angle)) {
+        // noop
+      } else if (MathUtil.isRight(angle)) {
+        player._weaponHandR.rotation = angle;
+        player._weaponHandR.visible = true;
+      } else if (MathUtil.isUp(angle)) {
+        // noop
+      } else {
+        player._weaponHandL.rotation = angle;
+        player._weaponHandL.visible = true;
+      }
+    }
+  },
+};
+
+var MathUtil = {
+  isUp: function(angle) {
+    return -3*Math.PI/4 < angle && angle <= -Math.PI/4;
+  },
+  isDown: function(angle) {
+    return Math.PI/4 < angle && angle <= 3*Math.PI/4;
+  },
+  isRight: function(angle) {
+    return -Math.PI/4 < angle && angle <= Math.PI/4;
+  },
+  isLeft: function(angle) {
+    return Math.abs(angle) > 3*Math.PI/4;
   }
 };
