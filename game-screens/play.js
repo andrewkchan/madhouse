@@ -61,6 +61,9 @@ var playState = {
     // cursor controls
     game.input.mouse.capture = true;
 
+    //setup player
+    this.createPlayer();
+
     // setup baby
     this.baby = this.game.add.sprite( 0, 0, 'baby' );
     this.baby.anchor.setTo( 0.5, 0.5 );
@@ -71,85 +74,7 @@ var playState = {
     this.baby.animations.play( 'sad' );
     this.groupElements.add( this.baby );
 
-    // setup player
-    // TODO: set character start position in level parameters
-    this.player = this.game.add.sprite(0, 0, 'empty_convict'); // invisible sprite as group root
-    this.player.anchor.setTo( 0.5, 0.5 );
-    this.player.direction = 2;
-    this.player.alive = true;
 
-    // player weapon hands and weapon
-    this.player._weaponHandR = this.player.addChild(game.make.sprite(4, 8, 'empty_convict_hand'));
-    this.player._weaponHandR.anchor.setTo(0.5, 0.5);
-    this.player._weaponHandR.pivot.x = -4;
-    this.player._weaponHandR._gun = this.player._weaponHandR.addChild(game.make.sprite(0, 0, 'revolver'));
-    this.player._weaponHandR._gun.anchor.set(0.15, 0.8);
-    this.player._weaponHandR._hand = this.player._weaponHandR.addChild(game.make.sprite(0, 0, 'convict_hand'));
-    this.player._weaponHandR._hand.anchor.setTo(0.5, 0.5);
-
-    this.player._weaponHandL = this.player.addChild(game.make.sprite(-3, 8, 'empty_convict_hand'));
-    this.player._weaponHandL.anchor.setTo(0.5, 0.5);
-    this.player._weaponHandL.pivot.x = -3;
-    this.player._weaponHandL._gun = this.player._weaponHandL.addChild(game.make.sprite(0, 0, 'revolver_flipped'));
-    this.player._weaponHandL._gun.anchor.set(0.15, 0.2);
-    this.player._weaponHandL._hand = this.player._weaponHandL.addChild(game.make.sprite(0, 0, 'convict_hand'));
-    this.player._weaponHandL._hand.anchor.setTo(0.5, 0.5);
-    this.player._weaponHandL.visible = false;
-    // player visible sprite
-    this.player._main = this.player.addChild(game.make.sprite(0, 0, 'convict'));
-    this.player._main.anchor.setTo( 0.5, 0.5 );
-    // the weapon gameobject
-    this.player._weapon = game.add.weapon(-1, "particle");
-    this.player._weapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
-    this.player._weapon.bulletSpeed = 400;
-    this.player._weapon.fireRate = 5;
-    this.player._weapon.trackSprite(this.player._weaponHandR._gun, 12, -8, true);
-
-    // player animations
-    this.player._main.animations.add('down', [18, 19, 20, 21, 22], 12, true);
-    this.player._main.animations.add('up', [23, 24, 25, 26, 27, 28], 12, true);
-    this.player._main.animations.add('right', [4, 5, 6, 7, 8], 12, true);
-    this.player._main.animations.add('left', [72, 73, 74, 75, 76], 12, true);
-    this.player._main.animations.add('roll_down', [58, 59, 60, 61], 10, false);
-    this.player._main.animations.add('roll_up', [49, 50, 51, 52], 10, false);
-    this.player._main.animations.add('roll_right', [9, 10, 11, 12], 10, false);
-    this.player._main.animations.add('roll_left', [77, 78, 79, 80], 10, false);
-    this.player._main.animations.add('recover_down', [62, 63, 64], 12, false);
-    this.player._main.animations.add('recover_up', [53, 54, 55], 12, false);
-    this.player._main.animations.add('recover_right', [13, 14, 15], 12, false);
-    this.player._main.animations.add('recover_left', [81, 82, 83], 12, false);
-    this.player._main.animations.add('idle_right', [0, 1, 2], 4, true);
-    this.player._main.animations.add('idle_left', [68, 69, 70], 4, true);
-    this.player._main.animations.add('idle_down', [46, 47, 48], 4, true);
-    this.player._main.animations.add('idle_up', [29, 30, 31], 4, true);
-    this.player._main.animations.add('fall', [86, 87, 88, 89], 10, false);
-
-    this.groupElements.add( this.player );
-
-    game.physics.arcade.enable( this.player );
-    this.player.body.setSize( 8, 12, 9, 19 );
-    this.player.body.tilePadding.set( 12, 12 );
-
-    this.playerStateMachine = (function() {
-      var stateStack = [];
-      var player = this.player;
-      return {
-        pushState: function(state) {
-          stateStack.push(state);
-          state.enter(player);
-        },
-        popState: function() {
-          return stateStack.pop();
-        },
-        peekState: function() {
-          return stateStack[stateStack.length - 1];
-        }
-      };
-    }).call(this);
-    this.playerStateMachine.pushState(PlayerStateFactory.IDLE());
-    game.input.onDown.add(function() {
-      this.playerStateMachine.peekState().onFire(this.player, game.input);
-    }, this);
 
     // baby thought bubble
     this.baby_thought = this.game.add.sprite( 0, 0, 'baby-thoughts' );
@@ -203,7 +128,7 @@ var playState = {
     this.groupHud.add( this.overlay_image );
 
     // reset settings
-    this.player_speed = 80;
+    this.player_speed = 90;
     this.milk_required = 0;
     this.milk_found = 0;
     this.game_over = false;
@@ -213,6 +138,102 @@ var playState = {
     this.load_map();
   },
 
+  createPlayer: function() {
+    // setup player
+    this.player = this.game.add.sprite(0, 0, 'empty_convict'); // invisible sprite as group root
+    this.player.anchor.setTo( 0.5, 0.5 );
+    this.player.direction = 2;
+    this.player.alive = true;
+
+    // player weapon hands and weapon
+    this.player._weaponHandR = this.player.addChild(game.make.sprite(4, 8, 'empty_convict_hand'));
+    this.player._weaponHandR.anchor.setTo(0.5, 0.5);
+    this.player._weaponHandR.pivot.x = -4;
+    this.player._weaponHandR._gun = this.player._weaponHandR.addChild(game.make.sprite(0, 0, 'revolver'));
+    this.player._weaponHandR._gun.anchor.set(0.15, 0.8);
+    this.player._weaponHandR._hand = this.player._weaponHandR.addChild(game.make.sprite(0, 0, 'convict_hand'));
+    this.player._weaponHandR._hand.anchor.setTo(0.5, 0.5);
+
+    this.player._weaponHandL = this.player.addChild(game.make.sprite(-3, 8, 'empty_convict_hand'));
+    this.player._weaponHandL.anchor.setTo(0.5, 0.5);
+    this.player._weaponHandL.pivot.x = -3;
+    this.player._weaponHandL._gun = this.player._weaponHandL.addChild(game.make.sprite(0, 0, 'revolver_flipped'));
+    this.player._weaponHandL._gun.anchor.set(0.15, 0.2);
+    this.player._weaponHandL._hand = this.player._weaponHandL.addChild(game.make.sprite(0, 0, 'convict_hand'));
+    this.player._weaponHandL._hand.anchor.setTo(0.5, 0.5);
+    this.player._weaponHandL.visible = false;
+
+    this.player._weaponHandU = this.player.addChild(game.make.sprite(-6, 8, 'empty_convict_hand'));
+    this.player._weaponHandU.anchor.setTo(0.5, 0.5);
+    this.player._weaponHandU._gun = this.player._weaponHandU.addChild(game.make.sprite(0, 0, 'revolver'));
+    this.player._weaponHandU._gun.anchor.set(0.15, 0.8);
+    this.player._weaponHandU._hand = this.player._weaponHandU.addChild(game.make.sprite(0, 0, 'convict_hand'));
+    this.player._weaponHandU._hand.anchor.setTo(0.5, 0.5);
+
+    this.player._weaponHandD = this.player.addChild(game.make.sprite(6, 8, 'empty_convict_hand'));
+    this.player._weaponHandD.anchor.setTo(0.5, 0.5);
+    this.player._weaponHandD._gun = this.player._weaponHandD.addChild(game.make.sprite(0, 0, 'revolver'));
+    this.player._weaponHandD._gun.anchor.set(0.15, 0.8);
+    this.player._weaponHandD._hand = this.player._weaponHandD.addChild(game.make.sprite(0, 0, 'convict_hand'));
+    this.player._weaponHandD._hand.anchor.setTo(0.5, 0.5);
+
+    // player visible sprite
+    this.player._main = this.player.addChild(game.make.sprite(0, 0, 'convict'));
+    this.player._main.anchor.setTo( 0.5, 0.5 );
+    // the weapon gameobject
+    this.player._weapon = game.add.weapon(-1, "particle");
+    this.player._weapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
+    this.player._weapon.bulletSpeed = 300;
+    this.player._weapon.fireRate = 5;
+    this.player._weapon.trackSprite(this.player._weaponHandR._gun, 12, -8, true);
+
+    // player animations
+    this.player._main.animations.add('down', [18, 19, 20, 21, 22], 12, true);
+    this.player._main.animations.add('up', [23, 24, 25, 26, 27, 28], 12, true);
+    this.player._main.animations.add('right', [4, 5, 6, 7, 8], 12, true);
+    this.player._main.animations.add('left', [72, 73, 74, 75, 76], 12, true);
+    this.player._main.animations.add('roll_down', [58, 59, 60, 61], 10, false);
+    this.player._main.animations.add('roll_up', [49, 50, 51, 52], 10, false);
+    this.player._main.animations.add('roll_right', [9, 10, 11, 12], 10, false);
+    this.player._main.animations.add('roll_left', [77, 78, 79, 80], 10, false);
+    this.player._main.animations.add('recover_down', [62, 63, 64], 12, false);
+    this.player._main.animations.add('recover_up', [53, 54, 55], 12, false);
+    this.player._main.animations.add('recover_right', [13, 14, 15], 12, false);
+    this.player._main.animations.add('recover_left', [81, 82, 83], 12, false);
+    this.player._main.animations.add('idle_right', [0, 1, 2], 4, true);
+    this.player._main.animations.add('idle_left', [68, 69, 70], 4, true);
+    this.player._main.animations.add('idle_down', [46, 47, 48], 4, true);
+    this.player._main.animations.add('idle_up', [29, 30, 31], 4, true);
+    this.player._main.animations.add('fall', [86, 87, 88, 89], 10, false);
+
+    this.groupElements.add( this.player );
+
+    game.physics.arcade.enable( this.player );
+    this.player.body.setSize( 8, 12, 9, 19 );
+    this.player.body.tilePadding.set( 12, 12 );
+
+    this.playerStateMachine = (function() {
+      var stateStack = [];
+      var player = this.player;
+      return {
+        pushState: function(state) {
+          stateStack.push(state);
+          state.enter(player);
+        },
+        popState: function() {
+          return stateStack.pop();
+        },
+        peekState: function() {
+          return stateStack[stateStack.length - 1];
+        }
+      };
+    }).call(this);
+    this.playerStateMachine.pushState(PlayerStateFactory.IDLE());
+    game.input.onDown.add(function() {
+      this.playerStateMachine.peekState().onFire(this.player, game.input);
+    }, this);
+  },
+
 
   /**
    * Update game
@@ -220,8 +241,9 @@ var playState = {
   update: function() {
     this.playerStateMachine.peekState().handleInput(this.game.input);
 
-    game.physics.arcade.collide( this.player, this.layer );
-    game.physics.arcade.collide( this.player, this.groupDoors );
+    game.physics.arcade.collide(this.player, this.layer);
+    game.physics.arcade.collide(this.player, this.groupDoors);
+    game.physics.arcade.collide(this.player._weapon, this.layer);
 
     game.physics.arcade.overlap( this.player, this.groupKeys, this.key_take, null, this );
     game.physics.arcade.overlap( this.player, this.groupMilk, this.milk_take, null, this );
@@ -824,7 +846,7 @@ var PlayerStateFactory = {
     };
   },
   ROLL: function(moveX, moveY) {
-    var speed = 130;
+    var speed = 140;
     if (moveX && moveY) {
       speed *= 0.66;
     }
@@ -862,6 +884,9 @@ var PlayerStateFactory = {
           playerStateMachine.pushState(PlayerStateFactory.RECOVER(velocityX, velocityY));
           return;
         }
+      },
+      onFire: function(player, input) {
+        return;
       },
       onComplete: function() {
         this.isComplete = true;
@@ -908,6 +933,9 @@ var PlayerStateFactory = {
           return;
         }
       },
+      onFire: function(player, input) {
+        return;
+      },
       onComplete: function() {
         this.isComplete = true;
       },
@@ -928,6 +956,9 @@ var PlayerStateFactory = {
         return;
       },
       update: function(player, playerStateMachine) {
+        return;
+      },
+      onFire: function(player, input) {
         return;
       },
     };
@@ -976,17 +1007,25 @@ var PlayerAnimUtil = {
   updateWeaponHand: function(player, angle, isVisible = true) {
     player._weaponHandL.visible = false;
     player._weaponHandR.visible = false;
+    player._weaponHandU.visible = false;
+    player._weaponHandD.visible = false;
     if (isVisible) {
       if (MathUtil.isDown(angle)) {
-        // noop
+        player._weaponHandD.rotation = angle;
+        player._weaponHandD.visible = true;
+        player._weapon.trackSprite(player._weaponHandD._gun, 12, -8, true);
       } else if (MathUtil.isRight(angle)) {
         player._weaponHandR.rotation = angle;
         player._weaponHandR.visible = true;
+        player._weapon.trackSprite(player._weaponHandR._gun, 12, -8, true);
       } else if (MathUtil.isUp(angle)) {
-        // noop
+        player._weaponHandU.rotation = angle;
+        player._weaponHandU.visible = true;
+        player._weapon.trackSprite(player._weaponHandU._gun, 12, -8, true);
       } else {
         player._weaponHandL.rotation = angle;
         player._weaponHandL.visible = true;
+        player._weapon.trackSprite(player._weaponHandR._gun, -12, -8, true);
       }
     }
   },
