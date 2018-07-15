@@ -41,6 +41,9 @@ var playState = {
    * Create game world
    */
   create: function () {
+    // Register NavMesh plugin with Phaser
+    this.navMeshPlugin = this.game.plugins.add(Phaser2NavMeshPlugin);
+
     // add object groups - used for looping through objects and for setting z-order
     this.groupLevel = this.add.group();
     this.groupDrinks = this.add.group();
@@ -123,7 +126,7 @@ var playState = {
   },
 
   createEnemies: function() {
-    var slime = new Slime();
+    var slime = new Slime(this.player);
     this.groupElements.add(slime);
   },
 
@@ -143,13 +146,13 @@ var playState = {
     game.physics.arcade.collide(this.player, this.groupDoors);
     game.physics.arcade.collide(this.groupElements, this.groupElements);
 
-    // game.physics.arcade.overlap(
-    //   this.player._weapon.bullets,
-    //   this.layer,
-    //   this.onBulletCollision,
-    //   null,
-    //   this
-    // );
+    game.physics.arcade.collide(
+      this.player._weapon.bullets,
+      this.layer,
+      this.onBulletCollision,
+      null,
+      this
+    );
     game.physics.arcade.overlap(
       this.player._weapon.bullets,
       this.groupElements,
@@ -168,7 +171,8 @@ var playState = {
   },
 
   onBulletCollision: function(bullet, entity) {
-    if (entity instanceof Actor && entity.name !== "player") {
+    if (entity instanceof Actor) {
+      if (entity.name === "player") return;
       entity.takeDamage(10);
     }
     bullet.kill();
@@ -406,11 +410,45 @@ var playState = {
 
     // setup map
     this.map = game.add.tilemap( 'map1' );
-    this.map.addTilesetImage( 'tiles' );
-    this.map.setCollision([1, 2, 4, 5, 6, 7, 8, 14, 15, 16, 22, 23, 24, 29, 30, 31, 12]);
+    this.map.addTilesetImage('tiles');
+
+    // -- NavMesh Setup --
+
+    // Load the navMesh from the tilemap object layer "navmesh". The navMesh was created with
+    // 8 pixels of space around obstacles.
+    this.navMesh = this.navMeshPlugin.buildMeshFromTiled(
+      "mesh1",
+      this.map.objects["navmesh"],
+      8
+    );
+    var navMeshDebugGraphics = game.add.graphics(0, 0);
+    navMeshDebugGraphics.alpha = 0.5;
+    this.navMesh.enableDebug(navMeshDebugGraphics);
+
+    var tileProperties = this.map.tilesets[0].tileProperties;
+    var tilesWithCollision =
+      Object
+        .keys(tileProperties)
+        .filter(function(index) {
+          return tileProperties[index].hasCollision;
+        })
+        .map(function(index) {
+          return Number(index) + 1;
+        });
+    var tilesWithFalling =
+      Object
+        .keys(tileProperties)
+        .filter(function(index) {
+          return tileProperties[index].canFall;
+        })
+        .map(function(index) {
+          return Number(index) + 1;
+        });
+
+    this.map.setCollision(tilesWithCollision);
     // water collision detection
     this.map.setTileIndexCallback(
-      [3, 9, 10, 11, 12, 13, 17, 18, 19, 20, 21, 25, 26, 27, 28],
+      tilesWithFalling,
       this.fall_in_pit,
       this
     );
@@ -456,12 +494,14 @@ var playState = {
       game.camera.bounds = null;
     }
 
-    // position slime
+    // position slime and config with navmesh
     var slimePosition = this.findObjectsByType('slime', this.map, 'objects');
     if (slimePosition[0]) {
       var slime = this.groupElements.getByName('slime');
       slime.x = slimePosition[0].x;
       slime.y = slimePosition[0].y;
+      slime.navMesh = this.navMesh;
+      this.slime = slime;
     }
 
 
@@ -632,5 +672,12 @@ var playState = {
   render: function() {
     // game.debug.body( this.player );
     // game.debug.body(this.slime);
+    // this.navMesh.debugDrawClear();
+    // this.navMesh.debugDrawMesh({
+    //   drawCentroid: true,
+    //   drawBounds: false,
+    //   drawNeighbors: false,
+    //   drawPortals: true
+    // });
   }
 };

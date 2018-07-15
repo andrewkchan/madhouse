@@ -1,4 +1,4 @@
-function Player() {
+function Player(navMesh) {
   Actor.call(this, 'player', 0, 0, 'empty_convict');
   PlayerAnimUtil.initSpriteWithAnims(this);
   PlayerBodyUtil.initSpriteWithBody(game, this);

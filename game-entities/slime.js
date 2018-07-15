@@ -1,14 +1,32 @@
-function Slime() {
+REPATH_FRAMES = 30;
+
+function Slime(player) {
   Actor.call(this, 'slime', 0, 0, 'slime');
   SlimeAnimUtil.initSpriteWithAnims(this);
   SlimeBodyUtil.initSpriteWithBody(game, this);
   this.health = 100;
+  this.botControlled = true;
+  this.speed = 50;
+  // AI stuff
+  this.navMesh = null;
+  this.player = player;
+  this.repathCountdown = REPATH_FRAMES;
 }
 Slime.prototype = Object.create(Actor.prototype);
 Slime.prototype.constructor = Slime;
 
 Slime.prototype.update = function() {
   Actor.prototype.update.call(this);
+  if (this.repathCountdown === 0) {
+    if (this.navMesh) {
+      this.goTo(this.navMesh, this.player.position);
+      // this.navMesh.debugDrawClear();
+      // this.navMesh.debugDrawPath(this.path, 0xffd900);
+    }
+    this.repathCountdown = REPATH_FRAMES;
+  } else {
+    this.repathCountdown -= 1;
+  }
 };
 
 Slime.prototype.takeDamage = function(dmg) {
@@ -17,6 +35,11 @@ Slime.prototype.takeDamage = function(dmg) {
 };
 Slime.prototype.flash = function(isFlashing) {
   this.alpha = isFlashing ? 0.3 : 1.0;
+};
+Slime.prototype.moveTowards = function(target) {
+  var angle = this.position.angle(target);
+  this.body.velocity.x = this.speed * Math.cos(angle);
+  this.body.velocity.y = this.speed * Math.sin(angle);
 };
 
 var SlimeAnimUtil = {
@@ -38,7 +61,7 @@ var SlimeAnimUtil = {
 var SlimeBodyUtil = {
   initSpriteWithBody: function(game, sprite) {
     game.physics.arcade.enable(sprite);
-    sprite.body.setSize(20, 18, 3, 12);
+    sprite.body.setSize(16, 16, 5, 12);
     sprite.body.tilePadding.set(8, 8);
     sprite.body.immovable = true;
   },
