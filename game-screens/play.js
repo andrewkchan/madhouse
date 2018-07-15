@@ -67,25 +67,6 @@ var playState = {
     //createEnemies
     this.createEnemies();
 
-    // setup baby
-    this.baby = this.game.add.sprite( 0, 0, 'baby' );
-    this.baby.anchor.setTo( 0.5, 0.5 );
-
-    // baby animations
-    this.baby.animations.add( 'happy', [ 0, 1, 0, 2 ], 2, true );
-    this.baby.animations.add( 'sad', [ 3, 4, 3, 5 ], 6, true );
-    this.baby.animations.play( 'sad' );
-    this.groupElements.add( this.baby );
-
-
-
-    // baby thought bubble
-    this.baby_thought = this.game.add.sprite( 0, 0, 'baby-thoughts' );
-    this.baby_thought.anchor.setTo( 0.5, 0.5 );
-    this.baby_thought.frame = 1;
-    this.baby_thought.visible = false;
-    this.groupElements.add( this.baby_thought );
-
     // setup message overlay
     this.message_overlay = this.game.add.sprite( 0, this.height + 5, 'overlay' );
     this.message_overlay.alpha = 0.8;
@@ -142,49 +123,12 @@ var playState = {
   },
 
   createEnemies: function() {
-    // setup enemy
-    var slime = SlimeAnimUtil.createSpriteWithAnims(this.game);
-    SlimeBodyUtil.initSpriteWithBody(this.game, slime);
-
-    slime.alive = true;
-    slime.name = 'slime';
-
+    var slime = new Slime();
     this.groupElements.add(slime);
   },
 
   createPlayer: function() {
-    this.player = PlayerAnimUtil.createSpriteWithAnims(this.game);
-    PlayerBodyUtil.initSpriteWithBody(this.player);
-
-    // the weapon gameobject
-    this.player._weapon = game.add.weapon(-1, "particle");
-    this.player._weapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
-    this.player._weapon.bulletSpeed = 300;
-    this.player._weapon.fireRate = 5;
-    this.player._weapon.trackSprite(this.player._weaponHandR._gun, 12, -8, true);
-
-    this.playerStateMachine = (function() {
-      var stateStack = [];
-      var player = this.player;
-      return {
-        pushState: function(state) {
-          stateStack.push(state);
-          state.enter(player);
-        },
-        popState: function() {
-          return stateStack.pop();
-        },
-        peekState: function() {
-          return stateStack[stateStack.length - 1];
-        }
-      };
-    }).call(this);
-    this.playerStateMachine.pushState(PlayerStateFactory.IDLE());
-    game.input.onDown.add(function() {
-      this.playerStateMachine.peekState().onFire(this.player, game.input);
-    }, this);
-
-    this.player.alive = true;
+    this.player = new Player();
     this.groupElements.add( this.player );
   },
 
@@ -193,9 +137,9 @@ var playState = {
    * Update game
    */
   update: function() {
-    this.playerStateMachine.peekState().handleInput(this.game.input);
+    this.player.handleInput(game.input);
 
-    game.physics.arcade.collide(this.player, this.layer);
+    game.physics.arcade.collide(this.groupElements, this.layer);
     game.physics.arcade.collide(this.player, this.groupDoors);
     game.physics.arcade.collide(this.player._weapon, this.layer);
     game.physics.arcade.collide(this.groupElements, this.groupElements);
@@ -204,8 +148,6 @@ var playState = {
     game.physics.arcade.overlap( this.player, this.groupMilk, this.milk_take, null, this );
     game.physics.arcade.overlap( this.player, this.groupDrinks, this.drink_take, null, this );
     game.physics.arcade.overlap( this.player, this.groupScrolls, this.scroll_display, null, this );
-
-    this.playerStateMachine.peekState().update(this.player, this.playerStateMachine);
 
     this.scroll_update();
     this.timer_update();
@@ -222,10 +164,6 @@ var playState = {
       this.timer_text.text = this.time_format( time_remaining );
     } else {
       this.game_lost();
-    }
-
-    if ( time_remaining < 30 ) {
-      this.baby_thought.visible = true;
     }
   },
 
@@ -498,19 +436,6 @@ var playState = {
       game.camera.bounds = null;
     }
 
-    // position baby
-    var baby_position = this.findObjectsByType( 'baby', this.map, 'objects' );
-
-    if ( baby_position[0] ) {
-      // use the first result - there should only be 1 start point per level
-      // if there isn't we'll just ignore the others
-      this.baby.x = baby_position[0].x + ( this.tile_size / 2 );
-      this.baby.y = baby_position[0].y - 1;
-
-      this.baby_thought.x = this.baby.x + 4;
-      this.baby_thought.y = this.baby.y - 11;
-    }
-
     // position slime
     var slimePosition = this.findObjectsByType('slime', this.map, 'objects');
     if (slimePosition[0]) {
@@ -601,9 +526,6 @@ var playState = {
    * Change baby so that he is happy, and add a go home message, and maybe some other decorations in the house
    */
   milk_collected: function() {
-    this.baby.animations.play( 'happy' );
-    this.baby_thought.frame = 0;
-
     game.time.events.add(
       Phaser.Timer.SECOND * 3,
       function() {
@@ -634,14 +556,14 @@ var playState = {
   fall_in_pit: function(sprite, tile) {
     if (tile.containsPoint(sprite.body.center.x, sprite.body.center.y)) {
       if (sprite === this.player) {
-        var currentState = this.playerStateMachine.peekState();
+        var currentState = this.player.playerStateMachine.peekState();
         if (currentState.name !== "FALL" && currentState.name !== "ROLL") {
           var fallToDeathState =
             PlayerStateFactory.FALL(function() {
               this.game_lost();
             }, this);
-          this.playerStateMachine.popState();
-          this.playerStateMachine.pushState(fallToDeathState);
+          this.player.playerStateMachine.popState();
+          this.player.playerStateMachine.pushState(fallToDeathState);
         }
       }
     }
@@ -652,7 +574,6 @@ var playState = {
    */
   game_finished: function() {
     this.timer.pause();
-    this.baby_thought.visible = true;
     this.door_open( { key_id: 7 } );
   },
 
