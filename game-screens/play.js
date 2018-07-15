@@ -141,9 +141,22 @@ var playState = {
 
     game.physics.arcade.collide(this.groupElements, this.layer);
     game.physics.arcade.collide(this.player, this.groupDoors);
-    game.physics.arcade.collide(this.player._weapon, this.layer);
     game.physics.arcade.collide(this.groupElements, this.groupElements);
 
+    // game.physics.arcade.overlap(
+    //   this.player._weapon.bullets,
+    //   this.layer,
+    //   this.onBulletCollision,
+    //   null,
+    //   this
+    // );
+    game.physics.arcade.overlap(
+      this.player._weapon.bullets,
+      this.groupElements,
+      this.onBulletCollision,
+      null,
+      this
+    );
     game.physics.arcade.overlap( this.player, this.groupKeys, this.key_take, null, this );
     game.physics.arcade.overlap( this.player, this.groupMilk, this.milk_take, null, this );
     game.physics.arcade.overlap( this.player, this.groupDrinks, this.drink_take, null, this );
@@ -152,6 +165,13 @@ var playState = {
     this.scroll_update();
     this.timer_update();
     this.game_update();
+  },
+
+  onBulletCollision: function(bullet, entity) {
+    if (entity instanceof Actor && entity.name !== "player") {
+      entity.takeDamage(10);
+    }
+    bullet.kill();
   },
 
   /**

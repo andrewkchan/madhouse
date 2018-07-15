@@ -9,6 +9,8 @@ function Player() {
   this._weapon.fireRate = 5;
   this._weapon.trackSprite(this._weaponHandR._gun, 12, -8, true);
 
+  this.health = 100;
+
   this.playerStateMachine = (function(player) {
     var stateStack = [];
     return {
@@ -37,7 +39,11 @@ Player.prototype.handleInput = function(input) {
   this.playerStateMachine.peekState().handleInput(input);
 };
 Player.prototype.update = function() {
+  Actor.prototype.update.call(this);
   this.playerStateMachine.peekState().update(this, this.playerStateMachine);
+};
+Player.prototype.flash = function(isFlashing) {
+  this._main.alpha = isFlashing ? 0.3 : 1.0;
 };
 
 // Factory for player state objects.

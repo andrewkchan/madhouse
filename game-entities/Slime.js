@@ -2,13 +2,21 @@ function Slime() {
   Actor.call(this, 'slime', 0, 0, 'slime');
   SlimeAnimUtil.initSpriteWithAnims(this);
   SlimeBodyUtil.initSpriteWithBody(game, this);
-
+  this.health = 100;
 }
 Slime.prototype = Object.create(Actor.prototype);
 Slime.prototype.constructor = Slime;
 
-Slime.prototype.update = function(game) {
-  return;
+Slime.prototype.update = function() {
+  Actor.prototype.update.call(this);
+};
+
+Slime.prototype.takeDamage = function(dmg) {
+  Actor.prototype.takeDamage.call(this, dmg);
+  this.flashForSeconds(0.5);
+};
+Slime.prototype.flash = function(isFlashing) {
+  this.alpha = isFlashing ? 0.3 : 1.0;
 };
 
 var SlimeAnimUtil = {
