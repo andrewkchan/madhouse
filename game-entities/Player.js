@@ -95,6 +95,7 @@ var PlayerStateFactory = {
       },
       onFire: function(player, input) {
         player._weapon.fireAtPointer(input.activePointer);
+        PlayerAnimUtil.recoilWeaponHand(player, cursorAngle);
       },
     };
   },
@@ -158,6 +159,7 @@ var PlayerStateFactory = {
       },
       onFire: function(player, input) {
         player._weapon.fireAtPointer(input.activePointer);
+        PlayerAnimUtil.recoilWeaponHand(player, cursorAngle);
       },
     };
   },
@@ -286,17 +288,27 @@ var PlayerAnimUtil = {
     player.anchor.setTo( 0.5, 0.5 );
 
     // player weapon hands and weapon
-    player._weaponHandR = player.addChild(game.make.sprite(4, 8, 'empty_convict_hand'));
+    player._weaponHandR = player.addChild(game.make.sprite(7, 8, 'empty_convict_hand'));
     player._weaponHandR.anchor.setTo(0.5, 0.5);
-    player._weaponHandR.pivot.x = -4;
+    player._weaponHandR._recoilTween =
+      game.add.tween(player._weaponHandR).to({ x: 4, rotation: '-0.5' }, 20, Phaser.Easing.Linear.None);
+    player._weaponHandR._recoilTween.chain(
+      game.add.tween(player._weaponHandR).to({ x: 7, rotation: '+0.5' }, 50, Phaser.Easing.Linear.None)
+    );
+    //player._weaponHandR.pivot.x = -4;
     player._weaponHandR._gun = player._weaponHandR.addChild(game.make.sprite(0, 0, 'revolver'));
     player._weaponHandR._gun.anchor.set(0.15, 0.8);
     player._weaponHandR._hand = player._weaponHandR.addChild(game.make.sprite(0, 0, 'convict_hand'));
     player._weaponHandR._hand.anchor.setTo(0.5, 0.5);
 
-    player._weaponHandL = player.addChild(game.make.sprite(-3, 8, 'empty_convict_hand'));
+    player._weaponHandL = player.addChild(game.make.sprite(-6, 8, 'empty_convict_hand'));
     player._weaponHandL.anchor.setTo(0.5, 0.5);
-    player._weaponHandL.pivot.x = -3;
+    player._weaponHandL._recoilTween =
+      game.add.tween(player._weaponHandL).to({ x: -3, rotation: '+0.5' }, 20, Phaser.Easing.Linear.None);
+    player._weaponHandL._recoilTween.chain(
+      game.add.tween(player._weaponHandL).to({ x: -6, rotation: '-0.5' }, 50, Phaser.Easing.Linear.None)
+    );
+    //player._weaponHandL.pivot.x = -3;
     player._weaponHandL._gun = player._weaponHandL.addChild(game.make.sprite(0, 0, 'revolver_flipped'));
     player._weaponHandL._gun.anchor.set(0.15, 0.2);
     player._weaponHandL._hand = player._weaponHandL.addChild(game.make.sprite(0, 0, 'convict_hand'));
@@ -305,6 +317,11 @@ var PlayerAnimUtil = {
 
     player._weaponHandU = player.addChild(game.make.sprite(-6, 8, 'empty_convict_hand'));
     player._weaponHandU.anchor.setTo(0.5, 0.5);
+    player._weaponHandU._recoilTween =
+      game.add.tween(player._weaponHandU).to({ y: 11, rotation: '-0.5' }, 20, Phaser.Easing.Linear.None);
+    player._weaponHandU._recoilTween.chain(
+      game.add.tween(player._weaponHandU).to({ y: 8, rotation: '+0.5' }, 50, Phaser.Easing.Linear.None)
+    );
     player._weaponHandU._gun = player._weaponHandU.addChild(game.make.sprite(0, 0, 'revolver'));
     player._weaponHandU._gun.anchor.set(0.15, 0.8);
     player._weaponHandU._hand = player._weaponHandU.addChild(game.make.sprite(0, 0, 'convict_hand'));
@@ -312,6 +329,11 @@ var PlayerAnimUtil = {
 
     player._weaponHandD = player.addChild(game.make.sprite(6, 8, 'empty_convict_hand'));
     player._weaponHandD.anchor.setTo(0.5, 0.5);
+    player._weaponHandD._recoilTween =
+      game.add.tween(player._weaponHandD).to({ y: 5, rotation: '-0.5' }, 20, Phaser.Easing.Linear.None);
+    player._weaponHandD._recoilTween.chain(
+      game.add.tween(player._weaponHandD).to({ y: 8, rotation: '+0.5' }, 50, Phaser.Easing.Linear.None)
+    );
     player._weaponHandD._gun = player._weaponHandD.addChild(game.make.sprite(0, 0, 'revolver'));
     player._weaponHandD._gun.anchor.set(0.15, 0.8);
     player._weaponHandD._hand = player._weaponHandD.addChild(game.make.sprite(0, 0, 'convict_hand'));
@@ -339,6 +361,17 @@ var PlayerAnimUtil = {
     player._main.animations.add('idle_down', [46, 47, 48], 4, true);
     player._main.animations.add('idle_up', [29, 30, 31], 4, true);
     player._main.animations.add('fall', [86, 87, 88, 89], 10, false);
+  },
+  recoilWeaponHand: function(player, angle) {
+    if (MathUtil.isDown(angle)) {
+      player._weaponHandD._recoilTween.start();
+    } else if (MathUtil.isRight(angle)) {
+      player._weaponHandR._recoilTween.start();
+    } else if (MathUtil.isUp(angle)) {
+      player._weaponHandU._recoilTween.start();
+    } else {
+      player._weaponHandL._recoilTween.start();
+    }
   },
   getDirectionString: function(angle) {
     if (MathUtil.isDown(angle)) {

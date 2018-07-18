@@ -6,7 +6,7 @@ function Slime(player) {
   SlimeBodyUtil.initSpriteWithBody(game, this);
   this.health = 100;
   this.botControlled = true;
-  this.speed = 50;
+  this.speed = 40;
   // AI stuff
   this.navMesh = null;
   this.player = player;
