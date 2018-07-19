@@ -66,3 +66,7 @@ Actor.prototype.moveTowards = function(target) {
   // should be overriden by children.
   return;
 };
+Actor.prototype.collideWith = function(entity) {
+  // override
+  return;
+}

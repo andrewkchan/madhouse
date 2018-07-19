@@ -39,3 +39,21 @@ var MathUtil = {
     return Math.abs(angle) > 3*Math.PI/4;
   }
 };
+
+var StateMachineUtil = {
+  createStateMachine: function(actor) {
+    var stateStack = [];
+    return {
+      pushState: function(state) {
+        stateStack.push(state);
+        state.enter(actor);
+      },
+      popState: function() {
+        return stateStack.pop();
+      },
+      peekState: function() {
+        return stateStack[stateStack.length - 1];
+      }
+    };
+  },
+};

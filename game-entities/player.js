@@ -11,21 +11,7 @@ function Player(navMesh) {
 
   this.health = 100;
 
-  this.playerStateMachine = (function(player) {
-    var stateStack = [];
-    return {
-      pushState: function(state) {
-        stateStack.push(state);
-        state.enter(player);
-      },
-      popState: function() {
-        return stateStack.pop();
-      },
-      peekState: function() {
-        return stateStack[stateStack.length - 1];
-      }
-    };
-  })(this);
+  this.playerStateMachine = StateMachineUtil.createStateMachine(this);
   this.playerStateMachine.pushState(PlayerStateFactory.IDLE());
   game.input.onDown.add(function() {
     this.playerStateMachine.peekState().onFire(this, game.input);
@@ -41,6 +27,10 @@ Player.prototype.handleInput = function(input) {
 Player.prototype.update = function() {
   Actor.prototype.update.call(this);
   this.playerStateMachine.peekState().update(this, this.playerStateMachine);
+};
+Player.prototype.takeDamage = function(dmg) {
+  Actor.prototype.takeDamage.call(this, dmg);
+  this.flashForSeconds(0.5);
 };
 Player.prototype.flash = function(isFlashing) {
   this._main.alpha = isFlashing ? 0.3 : 1.0;

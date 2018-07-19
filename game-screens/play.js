@@ -99,6 +99,16 @@ var playState = {
     this.timerEvent = this.timer.add( this.time_limit, this.timer_end, this );
     this.timer.start();
 
+    this.health_overlay = this.game.add.sprite(this.width - 21, this.height + 64 - 7, 'overlay');
+    this.health_overlay.alpha = 0.8;
+    this.health_overlay.anchor.setTo(0, 1);
+    this.groupHud.add(this.health_overlay);
+    this.health_text = this.game.add.retroFont('font', 4, 6, this.font_set, 8, 3, 1, 2, 0);
+    this.health_image = this.game.add.image(this.width, this.height - 7, this.health_text);
+    this.health_image.anchor.setTo(1, 0);
+    this.health_text.text = "100";
+    this.groupHud.add(this.health_image);
+
     // setup game overlay
     this.overlay = this.game.add.sprite( 0, 0, 'overlay' );
     this.overlay.alpha = 0;
@@ -144,8 +154,14 @@ var playState = {
 
     game.physics.arcade.collide(this.groupElements, this.layer);
     game.physics.arcade.collide(this.player, this.groupDoors);
-    game.physics.arcade.collide(this.groupElements, this.groupElements);
 
+    game.physics.arcade.collide(
+      this.player,
+      this.groupElements,
+      this.onPlayerEntityCollision,
+      null,
+      this
+    );
     game.physics.arcade.collide(
       this.player._weapon.bullets,
       this.layer,
@@ -168,11 +184,18 @@ var playState = {
     this.scroll_update();
     this.timer_update();
     this.game_update();
+
+    this.health_text.text = String(this.player.health);
+  },
+
+  onPlayerEntityCollision: function(player, entity) {
+    if (entity instanceof Actor && entity.name !== "player") {
+      entity.collideWith(player);
+    }
   },
 
   onBulletCollision: function(bullet, entity) {
-    if (entity instanceof Actor) {
-      if (entity.name === "player") return;
+    if (entity instanceof Actor && entity.name !== "player") {
       entity.takeDamage(10);
     }
     bullet.kill();
