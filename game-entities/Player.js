@@ -3,7 +3,10 @@ function Player(navMesh) {
   PlayerAnimUtil.initSpriteWithAnims(this);
   PlayerBodyUtil.initSpriteWithBody(game, this);
   // the weapon gameobject
-  this._weapon = game.add.weapon(-1, "particle");
+  this._weapon = game.add.weapon(0, "particle");
+  this._weapon.bulletClass = RevolverBullet;
+  this._weapon.setBulletBodyOffset(6, 6, 0, 0);
+  this._weapon.createBullets(-1);
   this._weapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
   this._weapon.bulletSpeed = 300;
   this._weapon.fireRate = 5;

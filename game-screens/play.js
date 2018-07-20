@@ -196,7 +196,7 @@ var playState = {
 
   onBulletCollision: function(bullet, entity) {
     if (entity instanceof Actor && entity.name !== "player") {
-      entity.takeDamage(10);
+      bullet.collideWith(entity);
     }
     bullet.kill();
   },
@@ -693,6 +693,7 @@ var playState = {
   },
 
   render: function() {
+    // this.player._weapon.debug(0, 0, true);
     // game.debug.body( this.player );
     // game.debug.body(this.slime);
     // this.navMesh.debugDrawClear();

@@ -42,6 +42,7 @@ var loadState = {
         game.load.image('empty_convict_hand', 'images/empty_convict_hand.png');
         game.load.image('empty_convict', 'images/empty_convict.png');
         game.load.image('particle', 'images/particle.png');
+        game.load.image('particle_sm', 'images/particle_sm.png');
         game.load.image('particle_overlay', 'images/particle_overlay.png');
 
         //game.load.image( 'enemy', 'images/enemy.png' );
