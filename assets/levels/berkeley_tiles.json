@@ -1,0 +1,12 @@
+{ "columns":10,
+ "image":"..\/images\/berkeley_tiles.png",
+ "imageheight":180,
+ "imagewidth":180,
+ "margin":0,
+ "name":"berkeley_tiles",
+ "spacing":0,
+ "tilecount":100,
+ "tileheight":18,
+ "tilewidth":18,
+ "type":"tileset"
+}

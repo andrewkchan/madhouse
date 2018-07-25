@@ -1,0 +1,12 @@
+{ "columns":3,
+ "image":"..\/images\/campanile.png",
+ "imageheight":252,
+ "imagewidth":54,
+ "margin":0,
+ "name":"campanile",
+ "spacing":0,
+ "tilecount":42,
+ "tileheight":18,
+ "tilewidth":18,
+ "type":"tileset"
+}
