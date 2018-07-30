@@ -1,6 +1,6 @@
 function Player(navMesh) {
   Actor.call(this, 'player', 0, 0, 'empty_convict');
-  this.weaponManager = new RevolverManager(this);
+  this.weaponManager = new NailgunManager(this);
   PlayerAnimUtil.initSpriteWithAnims(this);
   PlayerBodyUtil.initSpriteWithBody(game, this);
 

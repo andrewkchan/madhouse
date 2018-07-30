@@ -225,7 +225,7 @@ var playState = {
       if (entity.name === "player") return;
       bullet.collideWith(entity);
     }
-    bullet.kill();
+    bullet.impact();
   },
 
   /**
