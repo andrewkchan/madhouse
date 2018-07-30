@@ -7,7 +7,6 @@ var loadState = {
         this.input.maxPointers = 1;
 
         this.scale.pageAlignHorizontally = true;
-
     },
 
     preload: function () {
@@ -18,7 +17,7 @@ var loadState = {
         game.load.setPreloadSprite( progressBar );
 
         // Load all assets
-        this.load.path = 'assets/';
+        this.load.path = 'static/assets/';
 
         game.load.tilemap( 'map1', 'levels/map.json', null, Phaser.Tilemap.TILED_JSON );
 
@@ -33,6 +32,7 @@ var loadState = {
         game.load.spritesheet( 'player', 'images/player.png', 12, 15 );
         game.load.spritesheet('slime', 'images/slime.png', 25, 30);
         game.load.spritesheet( 'convict', 'images/luciano.png', 26, 32, 96, 0, 0 );
+        game.load.spritesheet( 'brian', 'images/brian.png', 26, 32, 96, 0, 0 );
         game.load.spritesheet( 'baby', 'images/baby.png', 12, 15 );
         game.load.spritesheet( 'baby-thoughts', 'images/baby-thoughts.png', 10, 10 );
         game.load.spritesheet( 'tilemap', 'images/tiles.png', 8, 8 );

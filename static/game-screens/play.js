@@ -9,6 +9,7 @@
 
 
 var playState = {
+  playerMap: {},
   player_speed: 0,
   player_speed_bonus: 9,
   tile_size: 8,
@@ -36,6 +37,18 @@ var playState = {
   display_scroll: false,
   font_set: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,;:?!-_\'#"\\/<>()@',
   time_limit: Phaser.Timer.MINUTE * 2 + Phaser.Timer.SECOND * 30,
+
+
+  addNewPlayer: function(id, x, y) {
+    console.log(`Added new player ${id} at position ${x}, ${y}`);
+    this.playerMap[id] = game.add.sprite(x, y, "revolver");
+    this.groupElements.add(this.playerMap[id]);
+  },
+
+  removePlayer: function(id) {
+    this.playerMap[id].destroy();
+    delete Game.playerMap[id];
+  },
 
   /**
    * Create game world
@@ -145,6 +158,19 @@ var playState = {
     this.groupElements.add( this.player );
   },
 
+  init: function(data) {
+    // If the game loads while the window is out of focus, it may hang; disableVisibilityChange should be set to true
+    // only once it's fully loaded
+    if (document.hasFocus()) {
+        game.stage.disableVisibilityChange = true; // Stay alive even if window loses focus
+    } else {
+        game.onResume.addOnce(function() {
+            game.stage.disableVisibilityChange = true;
+        }, this);
+    }
+    Client.askNewPlayer();
+  },
+
 
   /**
    * Update game
@@ -195,7 +221,8 @@ var playState = {
   },
 
   onBulletCollision: function(bullet, entity) {
-    if (entity instanceof Actor && entity.name !== "player") {
+    if (entity instanceof Actor) {
+      if (entity.name === "player") return;
       bullet.collideWith(entity);
     }
     bullet.kill();
