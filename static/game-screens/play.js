@@ -1,13 +1,5 @@
 /* global game, Phaser */
 
-/**
-* TODO
-* ---
-* enemies
-* more scrolls
-*/
-
-
 var playState = {
   playerMap: {},
   player_speed: 0,
@@ -39,10 +31,15 @@ var playState = {
   time_limit: Phaser.Timer.MINUTE * 2 + Phaser.Timer.SECOND * 30,
 
 
-  addNewPlayer: function(id, x, y) {
-    console.log(`Added new player ${id} at position ${x}, ${y}`);
-    this.playerMap[id] = game.add.sprite(x, y, "revolver");
-    this.groupElements.add(this.playerMap[id]);
+  addNewPlayer: function(id, playerSnapshot) {
+    console.log(`Added new player ${id} at position ${playerSnapshot.x}, ${playerSnapshot.y}`);
+    var player = new Player(null);
+    this.playerMap[id] = player;
+    player.x = playerSnapshot.x;
+    player.y = playerSnapshot.y;
+    player.body.velocity.x = playerSnapshot.velocity.x;
+    player.body.velocity.y = playerSnapshot.velocity.y;
+    this.actorGroup.add(player);
   },
 
   removePlayer: function(id) {
@@ -64,7 +61,7 @@ var playState = {
     this.groupDoors = this.add.group();
     this.groupScrolls = this.add.group();
     this.groupMilk = this.add.group();
-    this.groupElements = this.add.group();
+    this.actorGroup = this.add.group();
     this.groupHud = this.add.group();
 
     // fix hud to camera
@@ -149,13 +146,13 @@ var playState = {
   },
 
   createEnemies: function() {
-    var slime = new Slime(this.player);
-    this.groupElements.add(slime);
+    //var slime = new Slime(this.ownPlayer);
+    //this.actorGroup.add(slime);
   },
 
   createPlayer: function() {
-    this.player = new Player();
-    this.groupElements.add( this.player );
+    this.ownPlayer = new Player(null);
+    this.actorGroup.add( this.ownPlayer );
   },
 
   init: function(data) {
@@ -171,54 +168,79 @@ var playState = {
     Client.askNewPlayer();
   },
 
-
   /**
    * Update game
    */
   update: function() {
-    this.player.handleInput(game.input);
+    this.ownPlayer.handleInput(game.input);
 
-    game.physics.arcade.collide(this.groupElements, this.layer);
-    game.physics.arcade.collide(this.player, this.groupDoors);
+    game.physics.arcade.collide(this.actorGroup, this.layer);
+    game.physics.arcade.collide(this.ownPlayer, this.groupDoors);
 
     game.physics.arcade.collide(
-      this.player,
-      this.groupElements,
+      this.ownPlayer,
+      this.actorGroup,
       this.onPlayerEntityCollision,
       null,
       this
     );
     game.physics.arcade.collide(
-      this.player._weapon.bullets,
+      this.ownPlayer._weapon.bullets,
       this.layer,
       this.onBulletCollision,
       null,
       this
     );
     game.physics.arcade.overlap(
-      this.player._weapon.bullets,
-      this.groupElements,
+      this.ownPlayer._weapon.bullets,
+      this.actorGroup,
       this.onBulletCollision,
       null,
       this
     );
-    game.physics.arcade.overlap( this.player, this.groupKeys, this.key_take, null, this );
-    game.physics.arcade.overlap( this.player, this.groupMilk, this.milk_take, null, this );
-    game.physics.arcade.overlap( this.player, this.groupDrinks, this.drink_take, null, this );
-    game.physics.arcade.overlap( this.player, this.groupScrolls, this.scroll_display, null, this );
+    game.physics.arcade.overlap( this.ownPlayer, this.groupKeys, this.key_take, null, this );
+    game.physics.arcade.overlap( this.ownPlayer, this.groupMilk, this.milk_take, null, this );
+    game.physics.arcade.overlap( this.ownPlayer, this.groupDrinks, this.drink_take, null, this );
+    game.physics.arcade.overlap( this.ownPlayer, this.groupScrolls, this.scroll_display, null, this );
 
     this.scroll_update();
     this.timer_update();
     this.game_update();
 
-    this.health_text.text = String(this.player.health);
+    this.health_text.text = String(this.ownPlayer.health);
   },
 
-  onPlayerEntityCollision: function(player, entity) {
-    if (entity instanceof Actor && entity.name !== "player") {
-      entity.collideWith(player);
-    }
+  //========================================================
+  // Client-server sync stuff
+
+  beginSync: function() {
+    var updatesPerSecond = 20; // number of updates to send to server per second
+    setInterval(this.emitPlayerSnapshot.bind(this), 1000 / updatesPerSecond);
   },
+
+  emitPlayerSnapshot: function() {
+    // emit a snapshot of client's own player to the server.
+    // this should be called at a regular interval.
+    Client.socket.emit("snapshot", this.ownPlayer.getSnapshot());
+  },
+
+  processServerUpdate: function(updatePacket) {
+    var self = this;
+    Object.keys(updatePacket.players).forEach(function(id) {
+      var playerPacket = updatePacket.players[id];
+      if (!(id in self.playerMap)) {
+        self.addNewPlayer(id, playerPacket);
+      } else {
+        // sync player pos/velocity with server
+        self.playerMap[id].x = playerPacket.x;
+        self.playerMap[id].y = playerPacket.y;
+        self.playerMap[id].body.velocity.x = playerPacket.velocity.x;
+        self.playerMap[id].body.velocity.y = playerPacket.velocity.y;
+      }
+    });
+  },
+
+  //===========================================================
 
   onBulletCollision: function(bullet, entity) {
     if (entity instanceof Actor) {
@@ -226,6 +248,13 @@ var playState = {
       bullet.collideWith(entity);
     }
     bullet.impact();
+  },
+
+
+  onPlayerEntityCollision: function(player, entity) {
+    if (entity instanceof Actor && entity.name !== "player") {
+      entity.collideWith(player);
+    }
   },
 
   /**
@@ -533,25 +562,27 @@ var playState = {
     if ( player_position[0] ) {
       // use the first result - there should only be 1 start point per level
       // if there isn't we'll just ignore the others
-      this.player.x = player_position[0].x + ( this.tile_size / 2 );
-      this.player.y = player_position[0].y + 2;
+      this.ownPlayer.x = player_position[0].x + ( this.tile_size / 2 );
+      this.ownPlayer.y = player_position[0].y + 2;
 
-      this.camera.x = Math.floor( this.player.x / this.width );
-      this.camera.y = Math.floor( this.player.y / this.height );
+      this.camera.x = Math.floor( this.ownPlayer.x / this.width );
+      this.camera.y = Math.floor( this.ownPlayer.y / this.height );
 
       // position camera
-      game.camera.follow(this.player);
+      game.camera.follow(this.ownPlayer);
       game.camera.bounds = null;
     }
 
     // position slime and config with navmesh
     var slimePosition = this.findObjectsByType('slime', this.map, 'objects');
     if (slimePosition[0]) {
-      var slime = this.groupElements.getByName('slime');
-      slime.x = slimePosition[0].x;
-      slime.y = slimePosition[0].y;
-      slime.navMesh = this.navMesh;
-      this.slime = slime;
+      var slime = this.actorGroup.getByName('slime');
+      if (slime) {
+        slime.x = slimePosition[0].x;
+        slime.y = slimePosition[0].y;
+        slime.navMesh = this.navMesh;
+        this.slime = slime;
+      }
     }
 
 
@@ -658,22 +689,22 @@ var playState = {
     emitter.setYSpeed( 20, 40 );
     emitter.setXSpeed( 0, 0 );
     emitter.gravity = 0;
-    this.groupElements.add( emitter );
+    this.actorGroup.add( emitter );
 
     emitter.start( false, 1500, 70 );
   },
 
   fall_in_pit: function(sprite, tile) {
     if (tile.containsPoint(sprite.body.center.x, sprite.body.center.y)) {
-      if (sprite === this.player) {
-        var currentState = this.player.playerStateMachine.peekState();
+      if (sprite === this.ownPlayer) {
+        var currentState = this.ownPlayer.playerStateMachine.peekState();
         if (currentState.name !== "FALL" && currentState.name !== "ROLL") {
           var fallToDeathState =
             PlayerStateFactory.FALL(function() {
               this.game_lost();
             }, this);
-          this.player.playerStateMachine.popState();
-          this.player.playerStateMachine.pushState(fallToDeathState);
+          this.ownPlayer.playerStateMachine.popState();
+          this.ownPlayer.playerStateMachine.pushState(fallToDeathState);
         }
       }
     }
@@ -720,8 +751,8 @@ var playState = {
   },
 
   render: function() {
-    // this.player._weapon.debug(0, 0, true);
-    // game.debug.body( this.player );
+    // this.ownPlayer._weapon.debug(0, 0, true);
+    // game.debug.body( this.ownPlayer );
     // game.debug.body(this.slime);
     // this.navMesh.debugDrawClear();
     // this.navMesh.debugDrawMesh({

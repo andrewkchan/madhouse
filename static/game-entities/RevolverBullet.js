@@ -11,12 +11,15 @@ function RevolverBullet(game, x, y) {
   this._impact.anchor.setTo(0.5, 0.5);
   this._impact.animations.add('impact', [0, 1, 2], 20, false);
   this._impact.visible = false;
-
+  this.penetrations = 1; // number of enemies it can penetrate
 }
 RevolverBullet.prototype = Object.create(Phaser.Bullet.prototype);
 RevolverBullet.prototype.constructor = RevolverBullet;
 RevolverBullet.prototype.collideWith = function(actor) {
-  actor.takeDamage(10);
+  if (this.penetrations > 0) {
+      actor.takeDamage(10);
+      this.penetrations -= 1;
+  }
 };
 RevolverBullet.prototype.impact = function() {
   this.body.velocity.x = 0;
@@ -29,5 +32,6 @@ RevolverBullet.prototype.impact = function() {
     this.kill();
     this._impact.visible = false;
     // this._impact_light.visible = false;
+    this.penetrations = 1;
   }, this);
 };

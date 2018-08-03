@@ -30,6 +30,17 @@ Player.prototype.takeDamage = function(dmg) {
 Player.prototype.flash = function(isFlashing) {
   this._main.alpha = isFlashing ? 0.3 : 1.0;
 };
+Player.prototype.getSnapshot = function() {
+  // get a trimmed view of the player properties to send to the server.
+  return {
+    x: this.x,
+    y: this.y,
+    velocity: {
+      x: this.body.velocity.x,
+      y: this.body.velocity.y,
+    },
+  };
+};
 
 // Factory for player state objects.
 // ===============================

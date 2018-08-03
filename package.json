@@ -10,7 +10,11 @@
   "author": "Andrew Chan",
   "license": "MIT",
   "dependencies": {
+    "clone": "^2.1.0",
     "express": "^4.15.2",
+    "p2": "^0.7.1",
+    "performance-now": "^0.2.0",
+    "quickselect": "^1.0.0",
     "socket.io": "^1.7.3"
   }
 }

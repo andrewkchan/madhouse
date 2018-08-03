@@ -1,19 +1,20 @@
-var Client = {};
+var Client = {
+  INIT_EVENT_NAME: "init",
+};
 Client.socket = io.connect();
 
 Client.askNewPlayer = function() {
-  Client.socket.emit("newplayer");
+  Client.socket.emit("ask-init");
 };
 
-Client.socket.on("newplayer", function(data) {
-  playState.addNewPlayer(data.id, data.x, data.y);
+Client.socket.on(Client.INIT_EVENT_NAME, function(data) {
+  // This event triggers when receiving the initialization packet from the server, to use in playState.initWorld()
+  Client.socket.emit('ponq', data.stamp); // send back a pong stamp to compute latency
+  playState.beginSync();
 });
 
-Client.socket.on("allplayers", function(data) {
-  console.log(data);
-  data.map(function(player) {
-    playState.addNewPlayer(player.id, player.x, player.y);
-  });
+Client.socket.on("update", function(data) {
+  playState.processServerUpdate(data);
 });
 
 Client.socket.on("remove", function(data) {
