@@ -8,6 +8,7 @@ function Player(name, socketId) {
   var startingPosition = GameServer.determineStartingPosition();
   this.body.x = startingPosition.x;
   this.body.y = startingPosition.y;
+  this.currentStateName = "IDLE";
   this.socketId = socketId;
 }
 
@@ -27,6 +28,7 @@ Player.prototype.getSnapshot = function() {
       x: this.body.velocity[0],
       y: this.body.velocity[1],
     },
+    currentStateName: this.currentStateName,
     //angle: this.body.angle,
   };
 };
@@ -37,4 +39,6 @@ Player.prototype.syncWithSnapshot = function(snapshot) {
   this.body.y = snapshot.y;
   this.body.velocity[0] = snapshot.velocity.x;
   this.body.velocity[1] = snapshot.velocity.y;
-}
+
+  this.currentStateName = snapshot.currentStateName;
+};

@@ -8,14 +8,15 @@ function Player(navMesh) {
 
   this.playerStateMachine = StateMachineUtil.createStateMachine(this);
   this.playerStateMachine.pushState(PlayerStateFactory.IDLE());
-  game.input.onDown.add(function() {
-    this.playerStateMachine.peekState().onFire(this, game.input);
-  }, this);
-
 }
 Player.prototype = Object.create(Actor.prototype);
 Player.prototype.constructor = Player;
 
+Player.prototype.addInputEvents = function() {
+  game.input.onDown.add(function() {
+    this.playerStateMachine.peekState().onFire(this, game.input);
+  }, this);
+};
 Player.prototype.handleInput = function(input) {
   this.playerStateMachine.peekState().handleInput(input);
 };
@@ -30,6 +31,9 @@ Player.prototype.takeDamage = function(dmg) {
 Player.prototype.flash = function(isFlashing) {
   this._main.alpha = isFlashing ? 0.3 : 1.0;
 };
+Player.prototype.peekState = function() {
+  return this.playerStateMachine.peekState();
+}
 Player.prototype.getSnapshot = function() {
   // get a trimmed view of the player properties to send to the server.
   return {
@@ -39,7 +43,19 @@ Player.prototype.getSnapshot = function() {
       x: this.body.velocity.x,
       y: this.body.velocity.y,
     },
+    currentStateName: this.playerStateMachine.peekState().name,
   };
+};
+Player.prototype.syncWithSnapshot = function(playerSnapshot) {
+  // sync player properties with a server player snapshot.
+  this.x = playerSnapshot.x;
+  this.y = playerSnapshot.y;
+  this.body.velocity.x = playerSnapshot.velocity.x;
+  this.body.velocity.y = playerSnapshot.velocity.y;
+  if (this.playerStateMachine.peekState().name !== playerSnapshot.currentStateName) {
+    // this.playerStateMachine.popState();
+    // this.playerStateMachine.pushState(PlayerStateFactory[playerSnapshot.currentStateName]());
+  }
 };
 
 // Factory for player state objects.
@@ -52,229 +68,301 @@ Player.prototype.getSnapshot = function() {
 // player state objects also contain public members:
 // name - string name of the state.
 var PlayerStateFactory = {
+  _idlePool: [],
   IDLE: function() {
-    var idleAnimation = "idle_down";
-    var isRunning = false;
-    var cursorAngle = 0.0;
-    var isFiring = false;
-    return {
-      name: "IDLE",
-      enter: function(player) {
-        if (player.body.velocity.x > 0) {
-          idleAnimation = "idle_right";
-        } else if (player.body.velocity.x < 0) {
-          idleAnimation = "idle_left";
-        }
+    var state = null;
+    if (this._idlePool.length > 0) {
+      state = this._idlePool.pop();
+    } else {
+      // create new IDLE state
+      state = {
+        name: "IDLE",
+        idleAnimation: "idle_down",
+        isRunning: false,
+        cursorAngle: 0.0,
+        isFiring: false,
+        enter: function(player) {
+          if (player.body.velocity.x > 0) {
+            this.idleAnimation = "idle_right";
+          } else if (player.body.velocity.x < 0) {
+            this.idleAnimation = "idle_left";
+          }
 
-        if (player.body.velocity.y > 0) {
-          idleAnimation = "idle_down";
-        } else if (player.body.velocity.y < 0) {
-          idleAnimation = "idle_up";
-        }
-        player.body.velocity.x = 0;
-        player.body.velocity.y = 0;
-      },
-      handleInput: function(input) {
-        cursorAngle = GameInputUtil.getCursorAngle(input);
-        // take care of character movement --> enter run state
-        isRunning = GameInputUtil.isMoving(input);
-      },
-      update: function(player, playerStateMachine) {
-        if (isRunning) {
-          playerStateMachine.popState();
-          playerStateMachine.pushState(PlayerStateFactory.RUN());
-        } else {
-          idleAnimation = "idle_" + PlayerAnimUtil.getDirectionString(cursorAngle);
-          player.weaponManager.update(cursorAngle);
-          player._main.animations.play(idleAnimation);
-        }
-      },
-      onFire: function(player, input) {
-        player.weaponManager.fire(input);
-      },
-    };
+          if (player.body.velocity.y > 0) {
+            this.idleAnimation = "idle_down";
+          } else if (player.body.velocity.y < 0) {
+            this.idleAnimation = "idle_up";
+          }
+          player.body.velocity.x = 0;
+          player.body.velocity.y = 0;
+        },
+        handleInput: function(input) {
+          this.cursorAngle = GameInputUtil.getCursorAngle(input);
+          // take care of character movement --> enter run state
+          this.isRunning = GameInputUtil.isMoving(input);
+        },
+        update: function(player, playerStateMachine) {
+          if (this.isRunning) {
+            playerStateMachine.popState();
+            playerStateMachine.pushState(PlayerStateFactory.RUN());
+          } else {
+            this.idleAnimation = "idle_" + PlayerAnimUtil.getDirectionString(this.cursorAngle);
+            player.weaponManager.update(this.cursorAngle);
+            player._main.animations.play(this.idleAnimation);
+          }
+        },
+        onFire: function(player, input) {
+          player.weaponManager.fire(input);
+        },
+        resolve: function() {
+          this.isRunning = false;
+          this.isFiring = false;
+          this.cursorAngle = 0.0;
+          PlayerStateFactory._idlePool.push(this);
+        },
+      };
+    }
+    return state;
   },
+  _runPool: [],
   RUN: function() {
-    var velocityX = 0;
-    var velocityY = 0;
     var speed = playState.player_speed;
-    var isRolling = false;
-    var cursorAngle = 0.0;
-    return {
-      name: "RUN",
-      enter: function(player) {
-        return;
-      },
-      handleInput: function(input) {
-        var keyboard = input.keyboard;
-        velocityX = 0;
-        velocityY = 0;
-
-        cursorAngle = GameInputUtil.getCursorAngle(input);
-
-        // take care of character movement
-        if ( keyboard.isDown(Phaser.KeyCode.W) ) {
-          velocityY = -speed;
-        } else if ( keyboard.isDown(Phaser.KeyCode.S) ) {
-          velocityY = speed;
-        }
-
-        if ( keyboard.isDown(Phaser.KeyCode.A) ) {
-          velocityX = -speed;
-        } else if ( keyboard.isDown(Phaser.KeyCode.D) ) {
-          velocityX = speed;
-        }
-
-        if (keyboard.isDown(Phaser.KeyCode.SPACEBAR)) {
-          isRolling = true;
-        }
-      },
-      update: function(player, playerStateMachine) {
-        if (velocityX === 0 && velocityY === 0) {
-          playerStateMachine.popState();
-          playerStateMachine.pushState(PlayerStateFactory.IDLE());
+    var state = null;
+    if (this._runPool.length > 0) {
+      state = this._runPool.pop();
+    } else {
+      state = {
+        name: "RUN",
+        velocityX: 0,
+        velocityY: 0,
+        isRolling: false,
+        cursorAngle: 0.0,
+        enter: function(player) {
           return;
-        } else if (isRolling) {
-          playerStateMachine.popState();
-          playerStateMachine.pushState(PlayerStateFactory.ROLL(velocityX, velocityY));
-          return;
-        }
-        // reduce speed if moving diagonally so that we don't move super quickly
-        if ( velocityX && velocityY ) {
-          player.body.velocity.x = velocityX * 0.66;
-          player.body.velocity.y = velocityY * 0.66;
-        } else {
-          player.body.velocity.x = velocityX;
-          player.body.velocity.y = velocityY;
-        }
+        },
+        handleInput: function(input) {
+          var keyboard = input.keyboard;
+          this.velocityX = 0;
+          this.velocityY = 0;
 
-        var moveAnimation = PlayerAnimUtil.getDirectionString(cursorAngle);
-        player.weaponManager.update(cursorAngle);
-        player._main.animations.play(moveAnimation);
-      },
-      onFire: function(player, input) {
-        player.weaponManager.fire(input);
-      },
-    };
+          this.cursorAngle = GameInputUtil.getCursorAngle(input);
+
+          // take care of character movement
+          if ( keyboard.isDown(Phaser.KeyCode.W) ) {
+            this.velocityY = -speed;
+          } else if ( keyboard.isDown(Phaser.KeyCode.S) ) {
+            this.velocityY = speed;
+          }
+
+          if ( keyboard.isDown(Phaser.KeyCode.A) ) {
+            this.velocityX = -speed;
+          } else if ( keyboard.isDown(Phaser.KeyCode.D) ) {
+            this.velocityX = speed;
+          }
+
+          if (keyboard.isDown(Phaser.KeyCode.SPACEBAR)) {
+            this.isRolling = true;
+          }
+        },
+        update: function(player, playerStateMachine) {
+          if (this.velocityX === 0 && this.velocityY === 0) {
+            playerStateMachine.popState();
+            playerStateMachine.pushState(PlayerStateFactory.IDLE());
+            return;
+          } else if (this.isRolling) {
+            var nextState = PlayerStateFactory.ROLL(this.velocityX, this.velocityY);
+            playerStateMachine.popState();
+            playerStateMachine.pushState(nextState);
+            return;
+          }
+          // reduce speed if moving diagonally so that we don't move super quickly
+          if ( this.velocityX && this.velocityY ) {
+            player.body.velocity.x = this.velocityX * 0.66;
+            player.body.velocity.y = this.velocityY * 0.66;
+          } else {
+            player.body.velocity.x = this.velocityX;
+            player.body.velocity.y = this.velocityY;
+          }
+
+          var moveAnimation = PlayerAnimUtil.getDirectionString(this.cursorAngle);
+          player.weaponManager.update(this.cursorAngle);
+          player._main.animations.play(moveAnimation);
+        },
+        onFire: function(player, input) {
+          player.weaponManager.fire(input);
+        },
+        resolve: function() {
+          this.isRolling = false;
+          this.cursorAngle = 0.0;
+          this.velocityX = 0;
+          this.velocityY = 0;
+          PlayerStateFactory._runPool.push(this);
+        },
+      };
+    }
+    return state;
   },
-  ROLL: function(moveX, moveY) {
+  _rollPool: [],
+  ROLL: function(moveX = 0, moveY = 0) {
     var speed = 140;
     if (moveX && moveY) {
       speed *= 0.66;
     }
-    var velocityX = Math.sign(moveX) * speed;
-    var velocityY = Math.sign(moveY) * speed;
-    var rollAnimation = null;
-    return {
-      name: "ROLL",
-      isComplete: false,
-      enter: function(player) {
-        player.body.velocity.x = velocityX;
-        player.body.velocity.y = velocityY;
-        var animName = "roll_right";
-        if (velocityY > 0) {
-          animName = "roll_down";
-        } else if (velocityY < 0) {
-          animName = "roll_up";
-        }
+    var state = null;
+    if (this._rollPool.length > 0) {
+      state = this._rollPool.pop();
+      state.isComplete = false;
+      state.velocityX = Math.sign(moveX) * speed;
+      state.velocityY = Math.sign(moveY) * speed;
+    } else {
+      state = {
+        name: "ROLL",
+        isComplete: false,
+        velocityX: Math.sign(moveX) * speed,
+        velocityY: Math.sign(moveY) * speed,
+        enter: function(player) {
+          player.body.velocity.x = this.velocityX;
+          player.body.velocity.y = this.velocityY;
+          var animName = "roll_right";
+          if (this.velocityY > 0) {
+            animName = "roll_down";
+          } else if (this.velocityY < 0) {
+            animName = "roll_up";
+          }
 
-        if (velocityX > 0) {
-          animName = "roll_right";
-        } else if (velocityX < 0) {
-          animName = "roll_left";
-        }
-        rollAnimation = player._main.animations.play(animName);
-        player._main.animations.currentAnim.onComplete.addOnce(this.onComplete, this);
-        player.weaponManager.update(0, isVisible = false);
-      },
-      handleInput: function(input) {
-        return;
-      },
-      update: function(player, playerStateMachine) {
-        if (this.isComplete) {
-          playerStateMachine.popState();
-          playerStateMachine.pushState(PlayerStateFactory.RECOVER(velocityX, velocityY));
+          if (this.velocityX > 0) {
+            animName = "roll_right";
+          } else if (this.velocityX < 0) {
+            animName = "roll_left";
+          }
+          player._main.animations.play(animName);
+          player._main.animations.currentAnim.onComplete.addOnce(this.onComplete, this);
+          player.weaponManager.update(0, isVisible = false);
+        },
+        handleInput: function(input) {
           return;
-        }
-      },
-      onFire: function(player, input) {
-        return;
-      },
-      onComplete: function() {
-        this.isComplete = true;
-      },
-    };
+        },
+        update: function(player, playerStateMachine) {
+          if (this.isComplete) {
+            var nextState = PlayerStateFactory.RECOVER(this.velocityX, this.velocityY);
+            playerStateMachine.popState();
+            playerStateMachine.pushState(nextState);
+            return;
+          }
+        },
+        onFire: function(player, input) {
+          return;
+        },
+        onComplete: function() {
+          this.isComplete = true;
+        },
+        resolve: function() {
+          this.isComplete = false;
+          this.velocityX = 0;
+          this.velocityY = 0;
+          PlayerStateFactory._rollPool.push(this);
+        },
+      };
+    }
+    return state;
   },
-  RECOVER: function(moveX, moveY) {
+  _recoverPool: [],
+  RECOVER: function(moveX = 0, moveY = 0) {
     var speed = 50;
     if (moveX && moveY) {
       speed *= 0.66;
     }
-    var velocityX = Math.sign(moveX) * speed;
-    var velocityY = Math.sign(moveY) * speed;
-    var recoverAnimation = null;
-    return {
-      name: "RECOVER",
-      isComplete: false,
-      enter: function(player) {
-        player.body.velocity.x = velocityX;
-        player.body.velocity.y = velocityY;
-        var animName = "recover_right";
-        if (velocityY > 0) {
-          animName = "recover_down";
-        } else if (velocityY < 0) {
-          animName = "recover_up";
-        }
+    var state = null;
+    if (this._recoverPool.length > 0) {
+      state = this._recoverPool.pop();
+      state.isComplete = false;
+      state.velocityX = Math.sign(moveX) * speed;
+      state.velocityY = Math.sign(moveY) * speed;
+    } else {
+      state = {
+        name: "RECOVER",
+        isComplete: false,
+        velocityX: Math.sign(moveX) * speed,
+        velocityY: Math.sign(moveY) * speed,
+        enter: function(player) {
+          player.body.velocity.x = this.velocityX;
+          player.body.velocity.y = this.velocityY;
+          var animName = "recover_right";
+          if (this.velocityY > 0) {
+            animName = "recover_down";
+          } else if (this.velocityY < 0) {
+            animName = "recover_up";
+          }
 
-        if (velocityX > 0) {
-          animName = "recover_right";
-        } else if (velocityX < 0) {
-          animName = "recover_left";
-        }
-        recoverAnimation = player._main.animations.play(animName);
-        player._main.animations.currentAnim.onComplete.addOnce(this.onComplete, this);
-        player.weaponManager.update(0, isVisible = false);
-      },
-      handleInput: function(input) {
-        return;
-      },
-      update: function(player, playerStateMachine) {
-        if (this.isComplete) {
-          playerStateMachine.popState();
-          playerStateMachine.pushState(PlayerStateFactory.IDLE());
+          if (this.velocityX > 0) {
+            animName = "recover_right";
+          } else if (this.velocityX < 0) {
+            animName = "recover_left";
+          }
+          player._main.animations.play(animName);
+          player._main.animations.currentAnim.onComplete.addOnce(this.onComplete, this);
+          player.weaponManager.update(0, isVisible = false);
+        },
+        handleInput: function(input) {
           return;
-        }
-      },
-      onFire: function(player, input) {
-        return;
-      },
-      onComplete: function() {
-        this.isComplete = true;
-      },
-    };
+        },
+        update: function(player, playerStateMachine) {
+          if (this.isComplete) {
+            playerStateMachine.popState();
+            playerStateMachine.pushState(PlayerStateFactory.IDLE());
+            return;
+          }
+        },
+        onFire: function(player, input) {
+          return;
+        },
+        onComplete: function() {
+          this.isComplete = true;
+        },
+        resolve: function() {
+          this.isComplete = false;
+          PlayerStateFactory._recoverPool.push(this);
+        },
+      };
+    }
+    return state;
   },
-  FALL: function(onComplete, onCompleteContext) {
-    return {
-      name: "FALL",
-      enter: function(player) {
-        player.body.velocity.x = 0;
-        player.body.velocity.y = 0;
-        player._main.animations.play("fall");
-        player._main.animations.currentAnim.onComplete.addOnce(onComplete, onCompleteContext);
-        player.weaponManager.update(0, isVisible = false);
-        return;
-      },
-      handleInput: function(input) {
-        return;
-      },
-      update: function(player, playerStateMachine) {
-        return;
-      },
-      onFire: function(player, input) {
-        return;
-      },
-    };
-  }
+  _fallPool: [],
+  FALL: function(onComplete, onCompleteContext = null) {
+    var state = null;
+    if (this._fallPool.length > 0) {
+      state = this._fallPool.pop();
+      state.onComplete = onComplete;
+      state.onCompleteContext = onCompleteContext;
+    } else {
+      state = {
+        name: "FALL",
+        onComplete: onComplete,
+        onCompleteContext: onCompleteContext,
+        enter: function(player) {
+          player.body.velocity.x = 0;
+          player.body.velocity.y = 0;
+          player._main.animations.play("fall");
+          player._main.animations.currentAnim.onComplete.addOnce(this.onComplete, this.onCompleteContext);
+          player.weaponManager.update(0, isVisible = false);
+          return;
+        },
+        handleInput: function(input) {
+          return;
+        },
+        update: function(player, playerStateMachine) {
+          return;
+        },
+        onFire: function(player, input) {
+          return;
+        },
+        resolve: function() {
+          PlayerStateFactory._fallPool.push(this);
+        },
+      };
+    }
+    return state;
+  },
 };
 
 var PlayerAnimUtil = {

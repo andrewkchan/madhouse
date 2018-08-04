@@ -15,6 +15,7 @@ WeaponManager.prototype.recoilWeaponHand = function(angle) {
   return;
 };
 WeaponManager.prototype.fire = function(input) {
+  console.log("Fire weapon");
   this.player._weapon.fireAtPointer(input.activePointer);
   this.recoilWeaponHand(GameInputUtil.getCursorAngle(input));
 };

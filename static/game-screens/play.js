@@ -43,7 +43,7 @@ var playState = {
   },
 
   removePlayer: function(id) {
-    this.playerMap[id].destroy();
+    this.actorGroup.remove(this.playerMap[id], destroy=true);
     delete Game.playerMap[id];
   },
 
@@ -152,6 +152,7 @@ var playState = {
 
   createPlayer: function() {
     this.ownPlayer = new Player(null);
+    this.ownPlayer.addInputEvents();
     this.actorGroup.add( this.ownPlayer );
   },
 
@@ -226,18 +227,25 @@ var playState = {
 
   processServerUpdate: function(updatePacket) {
     var self = this;
-    Object.keys(updatePacket.players).forEach(function(id) {
+    var updatePlayerIds = Object.keys(updatePacket.players);
+    updatePlayerIds.forEach(function(id) {
       var playerPacket = updatePacket.players[id];
       if (!(id in self.playerMap)) {
         self.addNewPlayer(id, playerPacket);
       } else {
         // sync player pos/velocity with server
-        self.playerMap[id].x = playerPacket.x;
-        self.playerMap[id].y = playerPacket.y;
-        self.playerMap[id].body.velocity.x = playerPacket.velocity.x;
-        self.playerMap[id].body.velocity.y = playerPacket.velocity.y;
+        self.playerMap[id].syncWithSnapshot(playerPacket);
       }
     });
+    // remove any disconnected players
+    if (updatePlayerIds.length < Object.keys(this.playerMap).length) {
+      var playerIdsToDelete = Object.keys(this.playerMap).filter(function(playerId) {
+        return !(playerId in updatePacket.players);
+      });
+      playerIdsToDelete.forEach(function(playerId) {
+        self.removePlayer(playerId);
+      });
+    }
   },
 
   //===========================================================
@@ -722,18 +730,18 @@ var playState = {
    * Game over - have to try again
    */
   game_lost: function() {
-    this.overlay_new( 'You lost :(', 1000, 1 );
-
-    this.game_over = true;
-
-    // restart
-    game.time.events.add(
-        Phaser.Timer.SECOND * 2,
-        function() {
-            game.state.start( 'play' );
-        },
-        this
-    );
+    // this.overlay_new( 'You lost :(', 1000, 1 );
+    //
+    // this.game_over = true;
+    //
+    // // restart
+    // game.time.events.add(
+    //     Phaser.Timer.SECOND * 2,
+    //     function() {
+    //         game.state.start( 'play' );
+    //     },
+    //     this
+    // );
   },
 
   /**

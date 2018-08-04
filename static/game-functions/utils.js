@@ -49,7 +49,9 @@ var StateMachineUtil = {
         state.enter(actor);
       },
       popState: function() {
-        return stateStack.pop();
+        var state = stateStack.pop();
+        state.resolve();
+        return state;
       },
       peekState: function() {
         return stateStack[stateStack.length - 1];
