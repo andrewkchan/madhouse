@@ -15,13 +15,9 @@ var menuState = {
 
         // Start the game when the screen is tapped
         this.input.onDown.addOnce( this.start, this );
-
     },
 
     start: function() {
-
         game.state.start( 'play' );
-
     }
-
 };

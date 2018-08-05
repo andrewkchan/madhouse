@@ -44,7 +44,7 @@ var playState = {
 
   removePlayer: function(id) {
     this.actorGroup.remove(this.playerMap[id], destroy=true);
-    delete Game.playerMap[id];
+    delete this.playerMap[id];
   },
 
   /**

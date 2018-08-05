@@ -43,18 +43,33 @@ Player.prototype.getSnapshot = function() {
       x: this.body.velocity.x,
       y: this.body.velocity.y,
     },
-    currentStateName: this.playerStateMachine.peekState().name,
+    currentStateName: this.peekState().name,
+    cursorAngle: this.peekState().cursorAngle ? this.peekState().cursorAngle : 0,
   };
 };
 Player.prototype.syncWithSnapshot = function(playerSnapshot) {
   // sync player properties with a server player snapshot.
   this.x = playerSnapshot.x;
   this.y = playerSnapshot.y;
-  this.body.velocity.x = playerSnapshot.velocity.x;
-  this.body.velocity.y = playerSnapshot.velocity.y;
-  if (this.playerStateMachine.peekState().name !== playerSnapshot.currentStateName) {
-    // this.playerStateMachine.popState();
-    // this.playerStateMachine.pushState(PlayerStateFactory[playerSnapshot.currentStateName]());
+  // player state update methods should handle velocity stuff themselves.
+
+  if (this.peekState().name !== playerSnapshot.currentStateName) {
+    this.playerStateMachine.popState();
+    var nextState = null;
+    if (playerSnapshot.currentStateName === "ROLL" || playerSnapshot.currentStateName === "RECOVER") {
+      nextState = PlayerStateFactory[playerSnapshot.currentStateName](
+        playerSnapshot.velocity.x,
+        playerSnapshot.velocity.y,
+      );
+    } else {
+      nextState = PlayerStateFactory[playerSnapshot.currentStateName]();
+    }
+    this.playerStateMachine.pushState(nextState);
+  }
+  this.peekState().cursorAngle = playerSnapshot.cursorAngle;
+  if (playerSnapshot.currentStateName !== "IDLE" && playerSnapshot.currentStateName !== "FALL") {
+    this.peekState().velocityX = playerSnapshot.velocity.x;
+    this.peekState().velocityY = playerSnapshot.velocity.y;
   }
 };
 
@@ -80,7 +95,6 @@ var PlayerStateFactory = {
         idleAnimation: "idle_down",
         isRunning: false,
         cursorAngle: 0.0,
-        isFiring: false,
         enter: function(player) {
           if (player.body.velocity.x > 0) {
             this.idleAnimation = "idle_right";
@@ -116,7 +130,6 @@ var PlayerStateFactory = {
         },
         resolve: function() {
           this.isRunning = false;
-          this.isFiring = false;
           this.cursorAngle = 0.0;
           PlayerStateFactory._idlePool.push(this);
         },
@@ -141,6 +154,7 @@ var PlayerStateFactory = {
           return;
         },
         handleInput: function(input) {
+          // Change velocity, cursorAngle, isRolling based on input
           var keyboard = input.keyboard;
           this.velocityX = 0;
           this.velocityY = 0;
@@ -160,6 +174,12 @@ var PlayerStateFactory = {
             this.velocityX = speed;
           }
 
+          // reduce speed if moving diagonally so that we don't move super quickly
+          if ( this.velocityX && this.velocityY ) {
+            this.velocityX *= 0.66;
+            this.velocityY *= 0.66;
+          }
+
           if (keyboard.isDown(Phaser.KeyCode.SPACEBAR)) {
             this.isRolling = true;
           }
@@ -175,14 +195,8 @@ var PlayerStateFactory = {
             playerStateMachine.pushState(nextState);
             return;
           }
-          // reduce speed if moving diagonally so that we don't move super quickly
-          if ( this.velocityX && this.velocityY ) {
-            player.body.velocity.x = this.velocityX * 0.66;
-            player.body.velocity.y = this.velocityY * 0.66;
-          } else {
-            player.body.velocity.x = this.velocityX;
-            player.body.velocity.y = this.velocityY;
-          }
+          player.body.velocity.x = this.velocityX;
+          player.body.velocity.y = this.velocityY;
 
           var moveAnimation = PlayerAnimUtil.getDirectionString(this.cursorAngle);
           player.weaponManager.update(this.cursorAngle);
@@ -328,7 +342,7 @@ var PlayerStateFactory = {
     return state;
   },
   _fallPool: [],
-  FALL: function(onComplete, onCompleteContext = null) {
+  FALL: function(onComplete = null, onCompleteContext = null) {
     var state = null;
     if (this._fallPool.length > 0) {
       state = this._fallPool.pop();
@@ -343,7 +357,9 @@ var PlayerStateFactory = {
           player.body.velocity.x = 0;
           player.body.velocity.y = 0;
           player._main.animations.play("fall");
-          player._main.animations.currentAnim.onComplete.addOnce(this.onComplete, this.onCompleteContext);
+          if (this.onComplete) {
+            player._main.animations.currentAnim.onComplete.addOnce(this.onComplete, this.onCompleteContext);
+          }
           player.weaponManager.update(0, isVisible = false);
           return;
         },

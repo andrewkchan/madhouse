@@ -9,6 +9,7 @@ function Player(name, socketId) {
   this.body.x = startingPosition.x;
   this.body.y = startingPosition.y;
   this.currentStateName = "IDLE";
+  this.cursorAngle = 0;
   this.socketId = socketId;
 }
 
@@ -29,7 +30,7 @@ Player.prototype.getSnapshot = function() {
       y: this.body.velocity[1],
     },
     currentStateName: this.currentStateName,
-    //angle: this.body.angle,
+    cursorAngle: this.cursorAngle,
   };
 };
 
@@ -41,4 +42,5 @@ Player.prototype.syncWithSnapshot = function(snapshot) {
   this.body.velocity[1] = snapshot.velocity.y;
 
   this.currentStateName = snapshot.currentStateName;
+  this.cursorAngle = snapshot.cursorAngle;
 };
