@@ -85,7 +85,7 @@ server.sendInitializationPacket = function(socket, packet) {
 server.sendUpdate = function(socketId, packet) {
   packet = server.addStamp(packet);
   try {
-    packet.latency = 0;
+    packet.latency = Math.floor(server.getSocket(socketId).latency);
   } catch(e) {
     console.log(e);
     packet.latency = 0;

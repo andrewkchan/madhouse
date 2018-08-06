@@ -1,5 +1,5 @@
-function RevolverBullet(game, x, y) {
-  Phaser.Bullet.call(this, game, x, y, "particle_sm", 0);
+function RevolverBullet(shooterId, game, x, y) {
+  ClientBullet.call(this, shooterId, game, x, y);
   this._light = this.addChild(game.make.sprite(0, 0, 'particle_overlay'));
   this._light.anchor.setTo(0.5, 0.5);
   this._light.blendMode = PIXI.blendModes.OVERLAY;
@@ -13,7 +13,7 @@ function RevolverBullet(game, x, y) {
   this._impact.visible = false;
   this.penetrations = 1; // number of enemies it can penetrate
 }
-RevolverBullet.prototype = Object.create(Phaser.Bullet.prototype);
+RevolverBullet.prototype = Object.create(ClientBullet.prototype);
 RevolverBullet.prototype.constructor = RevolverBullet;
 RevolverBullet.prototype.collideWith = function(actor) {
   if (this.penetrations > 0) {
@@ -28,6 +28,7 @@ RevolverBullet.prototype.impact = function() {
   this._impact.visible = true;
   // this._impact_light.visible = true;
   this._impact.animations.play('impact');
+  this.isDirty = true;
   this._impact.animations.currentAnim.onComplete.addOnce(function() {
     this.kill();
     this._impact.visible = false;

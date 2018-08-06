@@ -2,12 +2,13 @@
 
 var playState = {
   playerMap: {},
+  bulletMap: {},
+  bulletGroup: null,
   player_speed: 0,
   player_speed_bonus: 9,
   tile_size: 8,
   width: 256,
   height: 144,
-  home_location: null,
   milk_required: 3,
   milk_found: 0,
   story_scroll: {
@@ -31,20 +32,27 @@ var playState = {
   time_limit: Phaser.Timer.MINUTE * 2 + Phaser.Timer.SECOND * 30,
 
 
-  addNewPlayer: function(id, playerSnapshot) {
-    console.log(`Added new player ${id} at position ${playerSnapshot.x}, ${playerSnapshot.y}`);
-    var player = new Player(null);
+  addNewPlayer: function(id) {
+    console.log(`Added new player ${id}`);
+    var player = new Player(id);
     this.playerMap[id] = player;
-    player.x = playerSnapshot.x;
-    player.y = playerSnapshot.y;
-    player.body.velocity.x = playerSnapshot.velocity.x;
-    player.body.velocity.y = playerSnapshot.velocity.y;
     this.actorGroup.add(player);
   },
 
   removePlayer: function(id) {
     this.actorGroup.remove(this.playerMap[id], destroy=true);
     delete this.playerMap[id];
+  },
+
+  addBulletFromSnapshot: function(bulletSnapshot) {
+    var uniqueId = `${bulletSnapshot.shooterId}:${bulletSnapshot.localBulletId}`;
+    this.bulletMap[uniqueId] = ClientBullet.fromSnapshot(bulletSnapshot);
+    this.bulletGroup.add(this.bulletMap[uniqueId]);
+  },
+  removeBullet: function(shooterId, localBulletId) {
+    var uniqueId = `${bulletSnapshot.shooterId}:${bulletSnapshot.localBulletId}`;
+    this.bulletGroup.remove(this.bulletMap[uniqueId], destroy=true);
+    delete this.bulletMap[uniqueId];
   },
 
   /**
@@ -62,6 +70,8 @@ var playState = {
     this.groupScrolls = this.add.group();
     this.groupMilk = this.add.group();
     this.actorGroup = this.add.group();
+    this.bulletGroup = this.add.group();
+    //this.bulletGroup = this.add.group();
     this.groupHud = this.add.group();
 
     // fix hud to camera
@@ -74,10 +84,6 @@ var playState = {
     // cursor controls
     game.input.mouse.capture = true;
 
-    //setup player
-    this.createPlayer();
-
-    //createEnemies
     this.createEnemies();
 
     // setup message overlay
@@ -150,12 +156,6 @@ var playState = {
     //this.actorGroup.add(slime);
   },
 
-  createPlayer: function() {
-    this.ownPlayer = new Player(null);
-    this.ownPlayer.addInputEvents();
-    this.actorGroup.add( this.ownPlayer );
-  },
-
   init: function(data) {
     // If the game loads while the window is out of focus, it may hang; disableVisibilityChange should be set to true
     // only once it's fully loaded
@@ -173,7 +173,80 @@ var playState = {
    * Update game
    */
   update: function() {
+    if (!this.ownPlayer) return;
     this.ownPlayer.handleInput(game.input);
+
+    //===================================
+    // Entity interpolation
+    //===================================
+    this.serverInterpDeltaTime += game.time.physicsElapsed;
+    if (this.serverUpdateBuffer.length > 2) {
+      // get the authoritative update packets surrounding the current interpolation time
+      var lastUpdate = this.serverUpdateBuffer[0];
+      var nextUpdate = this.serverUpdateBuffer[1];
+      var serverUpdateDT = (nextUpdate.stamp - lastUpdate.stamp)/1000.0;
+
+      // interpolation time elapsed exceeds time between last 2 updates.
+      // --> Apply the next update snapshot.
+      if (this.serverInterpDeltaTime >= serverUpdateDT) {
+        this.serverInterpDeltaTime -= serverUpdateDT;
+        this.serverUpdateBuffer.shift(); // drop the old update packet
+        var lastUpdate = this.serverUpdateBuffer[0];
+        var nextUpdate = this.serverUpdateBuffer[1];
+
+        serverUpdateDT = (nextUpdate.stamp - lastUpdate.stamp)/1000.0;
+
+        // load in any new entities from the last update and also
+        // interpolate all extant entities' state.
+        var self = this;
+        var updatePlayerIds = Object.keys(lastUpdate.players);
+        updatePlayerIds.forEach(function(playerId) {
+          var lastSnapshot = lastUpdate.players[playerId];
+          var nextSnapshot = nextUpdate.players[playerId] || lastSnapshot;
+          if (!(playerId in self.playerMap)) {
+            self.addNewPlayer(playerId, lastSnapshot);
+          }
+          self.playerMap[playerId].interpolateState(
+            lastSnapshot,
+            nextSnapshot,
+            self.serverInterpDeltaTime,
+            serverUpdateDT,
+          );
+        });
+        // remove any disconnected players
+        if (updatePlayerIds.length < Object.keys(this.playerMap).length) {
+          var playerIdsToDelete = Object.keys(this.playerMap).filter(function(playerId) {
+            return !(playerId in lastUpdate.players);
+          });
+          playerIdsToDelete.forEach(function(playerId) {
+            self.removePlayer(playerId);
+          });
+        }
+
+        var updateBulletIds = Object.keys(lastUpdate.bullets);
+        updateBulletIds.forEach(function(bulletId) {
+          var bulletSnapshot = lastUpdate.bullets[bulletId];
+          if (bulletSnapshot.shooterId !== self.ownPlayer.id) {
+            if (!(bulletId in self.bulletMap)) {
+              self.addBulletFromSnapshot(bulletSnapshot);
+            } else {
+              self.bulletMap[bulletId].syncWithSnapshot(bulletSnapshot);
+            }
+          } else {
+            // client's own bullets are managed through player obj
+            var ownBullets = self.ownPlayer._weapon.bullets;
+            // TODO sync own bullets with server, to allow for other players
+            // to destroy our bullets, etc.
+          }
+        });
+      }
+      //=====================================
+      // Any entities that need to be interpolated multiple times between server update packets
+      // should be interpolated here.
+      // <------FILL ME IN
+      //=====================================
+    }
+    //===================================
 
     game.physics.arcade.collide(this.actorGroup, this.layer);
     game.physics.arcade.collide(this.ownPlayer, this.groupDoors);
@@ -213,39 +286,56 @@ var playState = {
 
   //========================================================
   // Client-server sync stuff
+  //========================================================
+  serverUpdateBuffer: [], // buffer of server updates received. used for entity interpolation.
+  serverInterpDeltaTime: 0.0, // time in secs since last server update fully applied (NOT received)
 
   beginSync: function() {
     var updatesPerSecond = 20; // number of updates to send to server per second
-    setInterval(this.emitPlayerSnapshot.bind(this), 1000 / updatesPerSecond);
+    setInterval(this.emitClientSnapshot.bind(this), 1000 / updatesPerSecond);
   },
 
-  emitPlayerSnapshot: function() {
-    // emit a snapshot of client's own player to the server.
+  emitClientSnapshot: function() {
+    // emit a snapshot of client's own player and responsible entities to the server.
     // this should be called at a regular interval.
-    Client.socket.emit("snapshot", this.ownPlayer.getSnapshot());
+    var snapshot = new ClientSnapshot();
+    snapshot.setPlayerSnapshot(this.ownPlayer.getSnapshot());
+    var ownBullets = this.ownPlayer._weapon.bullets.children;
+    for (var childId in ownBullets) {
+      if (ownBullets[childId].isDirty) {
+        var bulletSnapshot = ownBullets[childId].getSnapshot();
+        snapshot.addBulletSnapshot(bulletSnapshot);
+      }
+    }
+    Client.socket.emit("snapshot", snapshot);
+  },
+
+  initOwnPlayer: function(data) {
+    console.log(`Init own player with id ${data.id}`);
+    this.ownPlayer = new Player(data.id);
+    this.ownPlayer.addInputEvents();
+    this.actorGroup.add( this.ownPlayer );
+
+    // position player
+    var player_position = this.findObjectsByType( 'start', this.map, 'objects' );
+
+    if ( player_position[0] ) {
+      // use the first result - there should only be 1 start point per level
+      // if there isn't we'll just ignore the others
+      this.ownPlayer.x = player_position[0].x + ( this.tile_size / 2 );
+      this.ownPlayer.y = player_position[0].y + 2;
+
+      this.camera.x = Math.floor( this.ownPlayer.x / this.width );
+      this.camera.y = Math.floor( this.ownPlayer.y / this.height );
+
+      // position camera
+      game.camera.follow(this.ownPlayer);
+      game.camera.bounds = null;
+    }
   },
 
   processServerUpdate: function(updatePacket) {
-    var self = this;
-    var updatePlayerIds = Object.keys(updatePacket.players);
-    updatePlayerIds.forEach(function(id) {
-      var playerPacket = updatePacket.players[id];
-      if (!(id in self.playerMap)) {
-        self.addNewPlayer(id, playerPacket);
-      } else {
-        // sync player pos/velocity with server
-        self.playerMap[id].syncWithSnapshot(playerPacket);
-      }
-    });
-    // remove any disconnected players
-    if (updatePlayerIds.length < Object.keys(this.playerMap).length) {
-      var playerIdsToDelete = Object.keys(this.playerMap).filter(function(playerId) {
-        return !(playerId in updatePacket.players);
-      });
-      playerIdsToDelete.forEach(function(playerId) {
-        self.removePlayer(playerId);
-      });
-    }
+    this.serverUpdateBuffer.push(updatePacket);
   },
 
   //===========================================================
@@ -564,22 +654,6 @@ var playState = {
     this.map.createFromObjects( 'objects', 62, 'tilemap', 61, true, false, this.groupScrolls );
     this.map.createFromObjects( 'objects', 63, 'tilemap', 62, true, false, this.groupMilk );
 
-    // position player
-    var player_position = this.findObjectsByType( 'start', this.map, 'objects' );
-
-    if ( player_position[0] ) {
-      // use the first result - there should only be 1 start point per level
-      // if there isn't we'll just ignore the others
-      this.ownPlayer.x = player_position[0].x + ( this.tile_size / 2 );
-      this.ownPlayer.y = player_position[0].y + 2;
-
-      this.camera.x = Math.floor( this.ownPlayer.x / this.width );
-      this.camera.y = Math.floor( this.ownPlayer.y / this.height );
-
-      // position camera
-      game.camera.follow(this.ownPlayer);
-      game.camera.bounds = null;
-    }
 
     // position slime and config with navmesh
     var slimePosition = this.findObjectsByType('slime', this.map, 'objects');
@@ -682,24 +756,6 @@ var playState = {
       },
       this
     );
-  },
-
-
-  /**
-   * Release confetti in the home to make it a happier place
-   */
-  house_party: function() {
-    var emitter = game.add.emitter( this.home_location.x + ( this.width / 2 ), this.home_location.y, 100 );
-    emitter.makeParticles( 'confetti', [ 0, 1, 2, 3 ] );
-    emitter.y = emitter.y + ( this.tile_size * 2 );
-    emitter.width = this.home_location.width - this.tile_size;
-    emitter.height = this.tile_size;
-    emitter.setYSpeed( 20, 40 );
-    emitter.setXSpeed( 0, 0 );
-    emitter.gravity = 0;
-    this.actorGroup.add( emitter );
-
-    emitter.start( false, 1500, 70 );
   },
 
   fall_in_pit: function(sprite, tile) {

@@ -16,6 +16,12 @@ function MovingEntity(x, y) {
     // TODO add to collision group etc.
     return body;
   })();
+
+  GameServer.world.addBody(this.body);
 }
 
 module.exports = MovingEntity;
+
+MovingEntity.prototype.destroy = function() {
+  GameServer.world.removeBody(this.body);
+};

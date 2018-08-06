@@ -1,8 +1,9 @@
 function NailgunManager(player) {
   WeaponManager.call(this, player);
+  this.isTweening = false;
 
   // the weapon gameobject
-  this.player._weapon.bulletClass = RevolverBullet;
+  this.player._weapon.bulletClass = RevolverBullet.bind(null, this.player.id);
   this.player._weapon.setBulletBodyOffset(6, 6, 0, 0);
   this.player._weapon.createBullets(-1);
   this.player._weapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;

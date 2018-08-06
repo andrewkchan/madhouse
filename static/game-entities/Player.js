@@ -1,5 +1,5 @@
-function Player(navMesh) {
-  Actor.call(this, 'player', 0, 0, 'empty_convict');
+function Player(id) {
+  Actor.call(this, id, 'player', 0, 0, 'empty_convict');
   this.weaponManager = new NailgunManager(this);
   PlayerAnimUtil.initSpriteWithAnims(this);
   PlayerBodyUtil.initSpriteWithBody(game, this);
@@ -49,28 +49,31 @@ Player.prototype.getSnapshot = function() {
 };
 Player.prototype.syncWithSnapshot = function(playerSnapshot) {
   // sync player properties with a server player snapshot.
-  this.x = playerSnapshot.x;
-  this.y = playerSnapshot.y;
-  // player state update methods should handle velocity stuff themselves.
+  this.interpolateState(playerSnapshot, playerSnapshot, 0, 1);
+};
+Player.prototype.interpolateState = function(lastSnapshot, nextSnapshot, dt, DT) {
+  // Interpolate the actor's state between the last and next snapshots.
+  // dt is time elapsed since last snapshot, and is created using time.physicsElapsed,
+  // so can be used for physics updates.
+  // DT is the time between the last snapshot and next snapshot.
+  this.x = lastSnapshot.x + (nextSnapshot.x - lastSnapshot.x)*dt/DT;
+  this.y = lastSnapshot.y + (nextSnapshot.y - lastSnapshot.y)*dt/DT;
 
-  if (this.peekState().name !== playerSnapshot.currentStateName) {
+  // Apply the last snapshot's movement state.
+  if (this.peekState().name !== lastSnapshot.currentStateName) {
     this.playerStateMachine.popState();
     var nextState = null;
-    if (playerSnapshot.currentStateName === "ROLL" || playerSnapshot.currentStateName === "RECOVER") {
-      nextState = PlayerStateFactory[playerSnapshot.currentStateName](
-        playerSnapshot.velocity.x,
-        playerSnapshot.velocity.y,
+    if (lastSnapshot.currentStateName === "ROLL" || lastSnapshot.currentStateName === "RECOVER") {
+      nextState = PlayerStateFactory[lastSnapshot.currentStateName](
+        lastSnapshot.velocity.x,
+        lastSnapshot.velocity.y,
       );
     } else {
-      nextState = PlayerStateFactory[playerSnapshot.currentStateName]();
+      nextState = PlayerStateFactory[lastSnapshot.currentStateName]();
     }
     this.playerStateMachine.pushState(nextState);
   }
-  this.peekState().cursorAngle = playerSnapshot.cursorAngle;
-  if (playerSnapshot.currentStateName !== "IDLE" && playerSnapshot.currentStateName !== "FALL") {
-    this.peekState().velocityX = playerSnapshot.velocity.x;
-    this.peekState().velocityY = playerSnapshot.velocity.y;
-  }
+  this.peekState().interpolateState(lastSnapshot, nextSnapshot, dt, DT);
 };
 
 // Factory for player state objects.
@@ -79,6 +82,7 @@ Player.prototype.syncWithSnapshot = function(playerSnapshot) {
 // enter - called when the state is entered.
 // handleInput - called when the state handles player input.
 // update - called so the state can update the player object.
+// resolve - called to reset the state and put it back in the pool.
 // ================================
 // player state objects also contain public members:
 // name - string name of the state.
@@ -114,6 +118,11 @@ var PlayerStateFactory = {
           this.cursorAngle = GameInputUtil.getCursorAngle(input);
           // take care of character movement --> enter run state
           this.isRunning = GameInputUtil.isMoving(input);
+        },
+        interpolateState: function(lastSnapshot, nextSnapshot, dt, DT) {
+          var lastCursorAngle = lastSnapshot.cursorAngle;
+          var nextCursorAngle = nextSnapshot.cursorAngle;
+          this.cursorAngle = lastCursorAngle + (nextCursorAngle - lastCursorAngle) * dt/DT;
         },
         update: function(player, playerStateMachine) {
           if (this.isRunning) {
@@ -183,6 +192,13 @@ var PlayerStateFactory = {
           if (keyboard.isDown(Phaser.KeyCode.SPACEBAR)) {
             this.isRolling = true;
           }
+        },
+        interpolateState: function(lastSnapshot, nextSnapshot, dt, DT) {
+          var lastCursorAngle = lastSnapshot.cursorAngle;
+          var nextCursorAngle = nextSnapshot.cursorAngle;
+          this.cursorAngle = lastCursorAngle + (nextCursorAngle - lastCursorAngle) * dt/DT;
+          this.velocityX = lastSnapshot.velocity.x;
+          this.velocityY = lastSnapshot.velocity.y;
         },
         update: function(player, playerStateMachine) {
           if (this.velocityX === 0 && this.velocityY === 0) {
@@ -256,6 +272,10 @@ var PlayerStateFactory = {
         handleInput: function(input) {
           return;
         },
+        interpolateState: function(lastSnapshot, nextSnapshot, dt, DT) {
+          this.velocityX = lastSnapshot.velocity.x;
+          this.velocityY = lastSnapshot.velocity.y;
+        },
         update: function(player, playerStateMachine) {
           if (this.isComplete) {
             var nextState = PlayerStateFactory.RECOVER(this.velocityX, this.velocityY);
@@ -320,6 +340,10 @@ var PlayerStateFactory = {
         handleInput: function(input) {
           return;
         },
+        interpolateState: function(lastSnapshot, nextSnapshot, dt, DT) {
+          this.velocityX = lastSnapshot.velocity.x;
+          this.velocityY = lastSnapshot.velocity.y;
+        },
         update: function(player, playerStateMachine) {
           if (this.isComplete) {
             playerStateMachine.popState();
@@ -364,6 +388,9 @@ var PlayerStateFactory = {
           return;
         },
         handleInput: function(input) {
+          return;
+        },
+        interpolateState: function(lastSnapshot, nextSnapshot, dt, DT) {
           return;
         },
         update: function(player, playerStateMachine) {

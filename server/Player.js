@@ -18,6 +18,9 @@ Player.prototype.constructor = Player;
 
 module.exports = Player;
 
+Player.prototype.destroy = function() {
+  MovingEntity.prototype.destroy.call(this);
+};
 Player.prototype.getSnapshot = function() {
   // Trim player object to send to client
   return {

@@ -5,6 +5,7 @@ var p2 = require('p2');
 var performance = { now: require("performance-now") };
 
 var GameServer = {
+  bullets: {}, // bullets indexed by `shooterId:localBulletId`
   isMapLoaded: false, // whether server loaded the map yet
   lastEntityId: 0, // Id of last entity created
   lastUpdatedTime: performance.now(),
@@ -27,7 +28,7 @@ var GameServer = {
 module.exports = GameServer;
 
 var Player = require('./Player');
-
+var ServerBullet = require('./ServerBullet');
 
 GameServer.addPlayerId = function(socketId, playerId) {
   GameServer.socketMap[socketId] = playerId;
@@ -83,7 +84,6 @@ GameServer.isPlayerIdFree = function(id) {
 
 GameServer.addNewPlayer = function(socket, data) {
   var player = new Player("new player", socket.id);
-  GameServer.world.addBody(player.body);
   GameServer.addPlayerId(socket.id, player.id);
   // add player to all relevant data structures
   GameServer.players[player.id] = player;
@@ -99,9 +99,7 @@ GameServer.addNewPlayer = function(socket, data) {
 
 GameServer.removePlayerBySocketId = function(socketId) {
   var player = GameServer.getPlayerBySocketId(socketId);
-  //player.setProperty("connected", false);
-  player.isAlive = false;
-  GameServer.world.removeBody(player.body);
+  player.destroy();
   delete GameServer.players[player.id];
   GameServer.numConnectedChanged = true;
   GameServer.deleteSocketId(socketId);
@@ -109,6 +107,7 @@ GameServer.removePlayerBySocketId = function(socketId) {
 
 //=========================================
 // Update Game objects
+
 
 GameServer.update = function() {
   // update physics
@@ -137,23 +136,47 @@ GameServer.getSnapshot = function() {
   // Get a snapshot of server state to send to clients.
   var snapshot = {
     players: {},
+    bullets: {},
   };
   Object.keys(GameServer.players).forEach(function(key) {
     snapshot.players[key] = GameServer.players[key].getSnapshot();
+  });
+  Object.keys(GameServer.bullets).forEach(function(key) {
+    if (GameServer.bullets[key].isDirty) {
+      snapshot.bullets[key] = GameServer.bullets[key].getSnapshot();
+    }
   });
   return snapshot;
 };
 
 GameServer.processClientSnapshot = function(socketId, snapshot) {
   var player = GameServer.getPlayerBySocketId(socketId);
-  if (player) player.syncWithSnapshot(snapshot);
+  if (player) {
+    player.syncWithSnapshot(snapshot.player);
+    // add/update any entities from client
+    for (var key in snapshot.bullets) {
+      var bulletSnapshot = snapshot.bullets[key];
+      if (!(key in GameServer.bullets)) {
+        GameServer.bullets[key] = new ServerBullet(
+          bulletSnapshot.bulletType,
+          bulletSnapshot.shooterId,
+          bulletSnapshot.localBulletId,
+          bulletSnapshot.x,
+          bulletSnapshot.y,
+        );
+      }
+      GameServer.bullets[key].syncWithSnapshot(bulletSnapshot);
+    }
+  }
 };
 
 //======================================================
 // Client initialization stuff
 
 GameServer.createInitializationPacket = function(playerId) {
-  return {};
+  return {
+    id: playerId,
+  };
 };
 
 GameServer.determineStartingPosition = function() {

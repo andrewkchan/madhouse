@@ -23,3 +23,7 @@ WeaponManager.prototype.update = function(angle, isVisible = true) {
   // override
   return;
 };
+WeaponManager.prototype.tweenRotation = function(angle1, angle2) {
+  // override
+  return;
+};
