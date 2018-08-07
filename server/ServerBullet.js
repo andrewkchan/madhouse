@@ -30,8 +30,8 @@ ServerBullet.prototype.getSnapshot = function() {
     x: this.x,
     y: this.y,
     velocity: {
-      x: this.body.velocity.x,
-      y: this.body.velocity.y,
+      x: this.body.velocity[0],
+      y: this.body.velocity[1],
     },
     shooterId: this.shooterId,
     localBulletId: this.localBulletId,

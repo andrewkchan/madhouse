@@ -47,7 +47,7 @@ function ClientBullet(shooterId, game, x, y) {
   this.body.tilePadding.set( 12, 12 );
 
   // if the object has recently been changed and needs to sync w/ server
-  this.isDirty = true;
+  this.isDirty = false;
 }
 ClientBullet.prototype = Object.create(Phaser.Bullet.prototype);
 ClientBullet.prototype.constructor = ClientBullet;
@@ -115,4 +115,10 @@ ClientBullet.prototype.syncWithSnapshot = function(bulletSnapshot) {
   this.y = bulletSnapshot.y;
   this.body.velocity.x = bulletSnapshot.velocity.x;
   this.body.velocity.y = bulletSnapshot.velocity.y;
+};
+
+ClientBullet.prototype.reset = function(x, y, health) {
+  // this is called when the bullet is fired.
+  Phaser.Bullet.prototype.reset.call(this, x, y, health);
+  this.isDirty = true;
 };

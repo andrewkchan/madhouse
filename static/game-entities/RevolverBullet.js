@@ -1,5 +1,6 @@
 function RevolverBullet(shooterId, game, x, y) {
   ClientBullet.call(this, shooterId, game, x, y);
+  this.bulletType = EnumBulletTypes.REVOLVER;
   this._light = this.addChild(game.make.sprite(0, 0, 'particle_overlay'));
   this._light.anchor.setTo(0.5, 0.5);
   this._light.blendMode = PIXI.blendModes.OVERLAY;
