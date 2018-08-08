@@ -1,20 +1,37 @@
 function Player(navMesh) {
   Actor.call(this, 'player', 0, 0, 'empty_convict');
-  this.weaponManager = new NailgunManager(this);
+  this.weaponManager = new DualUziManager(this);
+  this.weaponManager.initBackgroundAnims();
   PlayerAnimUtil.initSpriteWithAnims(this);
+  this.weaponManager.initForegroundAnims();
   PlayerBodyUtil.initSpriteWithBody(game, this);
 
   this.health = 100;
 
   this.playerStateMachine = StateMachineUtil.createStateMachine(this);
   this.playerStateMachine.pushState(PlayerStateFactory.IDLE());
+
+  this.snapshot = new PlayerSnapshot(
+    this.x,
+    this.y,
+    this.body.velocity.x,
+    this.body.velocity.y,
+    this.peekState().name,
+    this.peekState().cursorAngle || 1.0,
+  );
 }
 Player.prototype = Object.create(Actor.prototype);
 Player.prototype.constructor = Player;
 
 Player.prototype.addInputEvents = function() {
   game.input.onDown.add(function() {
-    this.playerStateMachine.peekState().onFire(this, game.input);
+    this.peekState().onFire(this, game.input);
+  }, this);
+  game.input.onUp.add(function() {
+    var s = this.peekState();
+    if (s.onFireStop) {
+      s.onFireStop(this, game.input);
+    }
   }, this);
 };
 Player.prototype.handleInput = function(input) {
@@ -34,18 +51,37 @@ Player.prototype.flash = function(isFlashing) {
 Player.prototype.peekState = function() {
   return this.playerStateMachine.peekState();
 }
+
+//=============================================
+// Networking code
+
+function PlayerSnapshot(
+  x,
+  y,
+  velocityX,
+  velocityY,
+  currentStateName,
+  cursorAngle,
+) {
+  this.x = x;
+  this.y = y;
+  this.velocity = {
+    x: velocityX,
+    y: velocityY,
+  };
+  this.currentStateName = currentStateName;
+  this.cursorAngle = cursorAngle;
+}
+
 Player.prototype.getSnapshot = function() {
   // get a trimmed view of the player properties to send to the server.
-  return {
-    x: this.x,
-    y: this.y,
-    velocity: {
-      x: this.body.velocity.x,
-      y: this.body.velocity.y,
-    },
-    currentStateName: this.peekState().name,
-    cursorAngle: this.peekState().cursorAngle ? this.peekState().cursorAngle : 0,
-  };
+  this.snapshot.x = this.x;
+  this.snapshot.y = this.y;
+  this.snapshot.velocity.x = this.body.velocity.x;
+  this.snapshot.velocity.y = this.body.velocity.y;
+  this.snapshot.currentStateName = this.peekState().name;
+  this.snapshot.cursorAngle = this.peekState().cursorAngle || 1.0;
+  return this.snapshot;
 };
 Player.prototype.syncWithSnapshot = function(playerSnapshot) {
   // sync player properties with a server player snapshot.
@@ -128,6 +164,9 @@ var PlayerStateFactory = {
         onFire: function(player, input) {
           player.weaponManager.fire(input);
         },
+        onFireStop: function(player, input) {
+          player.weaponManager.fireStop(input);
+        },
         resolve: function() {
           this.isRunning = false;
           this.cursorAngle = 0.0;
@@ -204,6 +243,9 @@ var PlayerStateFactory = {
         },
         onFire: function(player, input) {
           player.weaponManager.fire(input);
+        },
+        onFireStop: function(player, input) {
+          player.weaponManager.fireStop(input);
         },
         resolve: function() {
           this.isRolling = false;
@@ -386,7 +428,7 @@ var PlayerAnimUtil = {
     player.anchor.setTo( 0.5, 0.5 );
 
     // player visible sprite
-    player._main = player.addChild(game.make.sprite(0, 0, 'brian'));
+    player._main = player.addChild(game.make.sprite(0, 0, 'andrew'));
     player._main.anchor.setTo( 0.5, 0.5 );
 
     // player animations

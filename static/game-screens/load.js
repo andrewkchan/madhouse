@@ -32,7 +32,10 @@ var loadState = {
         game.load.spritesheet('slime', 'images/slime.png', 25, 30);
         game.load.spritesheet( 'convict', 'images/luciano.png', 26, 32, 96, 0, 0 );
         game.load.spritesheet( 'brian', 'images/brian.png', 26, 32, 96, 0, 0 );
+        game.load.spritesheet( 'andrew', 'images/andrew.png', 26, 32, 96, 0, 0 );
         game.load.spritesheet( 'tilemap', 'images/tiles.png', 8, 8 );
+        game.load.image('uzi', 'images/uzi.png');
+        game.load.image('uzi_flipped', 'images/uzi_flipped.png');
         game.load.image('nailgun', 'images/nailgun.png');
         game.load.image('nailgun_flipped', 'images/nailgun_flipped.png');
         game.load.image('revolver', 'images/revolver.png');

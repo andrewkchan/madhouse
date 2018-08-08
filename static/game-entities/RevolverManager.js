@@ -8,7 +8,19 @@ function RevolverManager(player) {
   this.player._weapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
   this.player._weapon.bulletSpeed = 300;
   this.player._weapon.fireRate = 5;
+}
 
+RevolverManager.prototype = Object.create(WeaponManager);
+RevolverManager.prototype.constructor = RevolverManager;
+RevolverManager.prototype.destroy = function() {
+  this.player._weapon.destroy();
+  this.player._weaponHandU.destroy();
+  this.player._weaponHandD.destroy();
+  this.player._weaponHandL.destroy();
+  this.player._weaponHandR.destroy();
+};
+RevolverManager.prototype.initBackgroundAnims = function() {
+  var player = this.player;
   // player weapon hands and weapon
   player._weaponHandR = player.addChild(game.make.sprite(7, 8, 'empty_convict_hand'));
   player._weaponHandR.anchor.setTo(0.5, 0.5);
@@ -60,16 +72,6 @@ function RevolverManager(player) {
   player._weaponHandD._hand.anchor.setTo(0.5, 0.5);
 
   this.player._weapon.trackSprite(player._weaponHandR, 12, -8, true);
-}
-
-RevolverManager.prototype = Object.create(WeaponManager);
-RevolverManager.prototype.constructor = RevolverManager;
-RevolverManager.prototype.destroy = function() {
-  this.player._weapon.destroy();
-  this.player._weaponHandU.destroy();
-  this.player._weaponHandD.destroy();
-  this.player._weaponHandL.destroy();
-  this.player._weaponHandR.destroy();
 };
 RevolverManager.prototype.recoilWeaponHand = function(angle) {
   if (MathUtil.isDown(angle)) {

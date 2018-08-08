@@ -8,6 +8,19 @@ function NailgunManager(player) {
   this.player._weapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
   this.player._weapon.bulletSpeed = 300;
   this.player._weapon.fireRate = 5;
+}
+
+NailgunManager.prototype = Object.create(WeaponManager);
+NailgunManager.prototype.constructor = NailgunManager;
+NailgunManager.prototype.destroy = function() {
+  this.player._weapon.destroy();
+  this.player._weaponHandU.destroy();
+  this.player._weaponHandD.destroy();
+  this.player._weaponHandL.destroy();
+  this.player._weaponHandR.destroy();
+};
+NailgunManager.prototype.initBackgroundAnims = function() {
+  var player = this.player;
 
   // player weapon hands and weapon
   player._weaponHandR = player.addChild(game.make.sprite(7, 8, 'empty_convict_hand'));
@@ -61,16 +74,6 @@ function NailgunManager(player) {
 
   this.player._weapon.trackSprite(player._weaponHandR, 7, -3, true);
 }
-
-NailgunManager.prototype = Object.create(WeaponManager);
-NailgunManager.prototype.constructor = NailgunManager;
-NailgunManager.prototype.destroy = function() {
-  this.player._weapon.destroy();
-  this.player._weaponHandU.destroy();
-  this.player._weaponHandD.destroy();
-  this.player._weaponHandL.destroy();
-  this.player._weaponHandR.destroy();
-};
 NailgunManager.prototype.recoilWeaponHand = function(angle) {
   if (MathUtil.isDown(angle)) {
     this.player._weaponHandD._recoilTween.start();
