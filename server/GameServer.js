@@ -50,9 +50,9 @@ GameServer.deleteSocketId = function(socketId) {
 
 var Body = require("./Body");
 var util = require("./util");
+var Group = require("./CollisionGroup");
 
 GameServer.readMap = function() {
-  // TODO
 
   fs.readFile("./static/assets/levels/map.json", function(err, data) {
     if (err) throw err;
@@ -101,7 +101,6 @@ GameServer.readMap = function() {
           return Number(index) + 1;
         });
 
-    console.log(tilesWithCollision);
     // add bodies for tiles with collision to the world
     var mainLayer = GameServer.layers[0];
     var tileWidth = GameServer.map.tilewidth;
@@ -114,6 +113,8 @@ GameServer.readMap = function() {
             width: util.pxToP2(tileWidth),
             height: util.pxToP2(tileWidth)
           });
+          rect.collisionGroup = Group.TILES;
+          rect.collisionMask = Group.ACTORS | Group.BULLETS;
           body.addShape(rect, util.pxToP2(tileWidth/2.0), util.pxToP2(tileWidth/2.0));
           GameServer.world.addBody(body);
           console.log(`Add tile body with collision at x:${x*tileWidth} y:${y*tileWidth}`)
@@ -218,6 +219,23 @@ GameServer.getSnapshot = function() {
 GameServer.processClientSnapshot = function(socketId, snapshot) {
   var player = GameServer.getPlayerBySocketId(socketId);
   if (player) player.syncWithSnapshot(snapshot);
+};
+
+//================================================
+// Respond to client events
+
+var ServerBullet = require("./ServerBullet");
+
+GameServer.handleLocalBulletFired = function(player, data) {
+  // create a server bullet to simulate locally and also
+  // create a ServerBulletFired event to relay
+  if (player) {
+    player.applyLocalBulletFiredEvent(data);
+    console.log(`ServerBulletFired at x:${data.x} y:${data.y}`);
+    var serverBulletFiredEvent = player.lastBulletFiredEvent;
+    return serverBulletFiredEvent;
+  }
+  return null;
 };
 
 //======================================================

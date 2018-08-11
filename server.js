@@ -54,6 +54,14 @@ io.on("connection", function(socket) {
     console.log("Disconnection with socket ID " + socket.id);
     if (GameServer.getPlayerBySocketId(socket.id)) GameServer.removePlayerBySocketId(socket.id);
   });
+
+  socket.on("localBulletFired", function(data) {
+    var player = GameServer.getPlayerBySocketId(socket.id);
+    if (player) {
+      var serverBulletFiredEvent = GameServer.handleLocalBulletFired(player, data);
+      if (serverBulletFiredEvent) socket.broadcast.emit("serverBulletFired", serverBulletFiredEvent);
+    }
+  });
 });
 
 server.addStamp = function(pkg) {

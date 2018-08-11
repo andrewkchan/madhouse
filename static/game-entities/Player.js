@@ -7,6 +7,10 @@ function Player(id) {
   this.weaponManager.initForegroundAnims();
   PlayerBodyUtil.initSpriteWithBody(game, this);
 
+  // bulletMap contains bullet objects indexed by localBulletId
+  // note bullets indep. from the weapon manager b/c can change weapon, but bullets still remain
+  this.bulletMap = {};
+
   this.health = 100;
 
   this.playerStateMachine = StateMachineUtil.createStateMachine(this);
@@ -63,6 +67,7 @@ function PlayerSnapshot(
   velocityY,
   currentStateName,
   cursorAngle,
+  weaponName,
 ) {
   this.x = x;
   this.y = y;
@@ -72,6 +77,7 @@ function PlayerSnapshot(
   };
   this.currentStateName = currentStateName;
   this.cursorAngle = cursorAngle;
+  this.weaponName = weaponName;
 }
 
 Player.prototype.getSnapshot = function() {
@@ -82,6 +88,7 @@ Player.prototype.getSnapshot = function() {
   this.snapshot.velocity.y = this.body.velocity.y;
   this.snapshot.currentStateName = this.peekState().name;
   this.snapshot.cursorAngle = this.peekState().cursorAngle || 1.0;
+  this.snapshot.weaponName = this.weaponManager ? this.weaponManager.name : "NullWeapon";
   return this.snapshot;
 };
 Player.prototype.syncWithSnapshot = function(playerSnapshot) {

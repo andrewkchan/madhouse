@@ -1,5 +1,5 @@
 function RevolverManager(player) {
-  WeaponManager.call(this, player);
+  WeaponManager.call(this, player, "Revolver");
 
   // the weapon gameobject
   this.player._weapon.bulletClass = RevolverBullet;

@@ -3,6 +3,8 @@ var p2 = require("p2");
 var MovingEntity = require("./MovingEntity");
 var GameServer = require("./GameServer");
 var Group = require("./CollisionGroup");
+var ServerBullet = require("./ServerBullet");
+var ServerBulletEvents = require("./ServerBulletEvents");
 var util = require("./util");
 
 
@@ -11,6 +13,8 @@ function Player(name, socketId) {
   this.name = name;
   this.isAlive = true;
   var startingPosition = GameServer.determineStartingPosition();
+
+  this.bulletMap = {};
 
   // configure collision of body, etc.
   // Note: p2 shapes are offset relative to center of mass.
@@ -27,6 +31,10 @@ function Player(name, socketId) {
   this.body.y = startingPosition.y;
   this.currentStateName = "IDLE";
   this.cursorAngle = 0;
+  this.weaponName = "DefaultWeapon";
+
+  this.lastBulletFiredEvent = null;
+
   this.socketId = socketId; // note socketId != entity id
 }
 
@@ -48,6 +56,7 @@ Player.prototype.getSnapshot = function() {
     },
     currentStateName: this.currentStateName,
     cursorAngle: this.cursorAngle,
+    weaponName: this.weaponName,
   };
 };
 
@@ -60,4 +69,21 @@ Player.prototype.syncWithSnapshot = function(snapshot) {
 
   this.currentStateName = snapshot.currentStateName;
   this.cursorAngle = snapshot.cursorAngle;
+  this.weaponName = snapshot.weaponName;
+};
+
+Player.prototype.applyLocalBulletFiredEvent = function(data) {
+  var bullet = ServerBullet.fromLocalBulletFiredEvent(this.id, data);
+  this.bulletMap[data.localBulletId] = bullet;
+  if (this.lastBulletFiredEvent == null) {
+    this.lastBulletFiredEvent = new ServerBulletEvents.ServerBulletFiredEvent(
+      data.x,
+      data.y,
+      data.velocity.x,
+      data.velocity.y,
+      data.localBulletId,
+      this.id,
+    );
+  }
+  this.lastBulletFiredEvent.syncWithBullet(bullet);
 };

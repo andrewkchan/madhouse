@@ -22,3 +22,7 @@ Client.socket.on("remove", function(data) {
   var id = data;
   playState.removePlayer(id);
 });
+
+Client.socket.on("serverBulletFired", function(data) {
+  console.log("serverBulletFired", data);
+});

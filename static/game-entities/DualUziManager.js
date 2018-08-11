@@ -1,5 +1,5 @@
 function DualUziManager(player) {
-  WeaponManager.call(this, player);
+  WeaponManager.call(this, player, "DualUzi");
 
   // the weapon gameobject
   this.player._weapon.bulletClass = RevolverBullet;
@@ -10,9 +10,6 @@ function DualUziManager(player) {
   this.player._weapon.bulletAngleVariance = 10; // degrees of shot spread
 
   this.dualWieldToggle = true;
-  this.player._weapon.onFire.add(function(weapon, bullet) {
-    this.dualWieldToggle = !this.dualWieldToggle;
-  }, this);
 }
 
 DualUziManager.prototype = Object.create(WeaponManager);
@@ -216,4 +213,8 @@ DualUziManager.prototype.fire = function(input) {
 };
 DualUziManager.prototype.fireStop = function(input) {
   this.player._weapon.autofire = false;
+};
+DualUziManager.prototype.onFire = function(weapon, bullet) {
+  WeaponManager.prototype.onFire.call(this, weapon, bullet);
+  this.dualWieldToggle = !this.dualWieldToggle;
 };
