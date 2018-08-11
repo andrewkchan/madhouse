@@ -10,6 +10,7 @@ Client.askNewPlayer = function() {
 Client.socket.on(Client.INIT_EVENT_NAME, function(data) {
   // This event triggers when receiving the initialization packet from the server, to use in playState.initWorld()
   Client.socket.emit('ponq', data.stamp); // send back a pong stamp to compute latency
+  playState.initOwnPlayer(data);
   playState.beginSync();
 });
 

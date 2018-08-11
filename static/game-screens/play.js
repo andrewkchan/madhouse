@@ -33,7 +33,7 @@ var playState = {
 
   addNewPlayer: function(id, playerSnapshot) {
     console.log(`Added new player ${id} at position ${playerSnapshot.x}, ${playerSnapshot.y}`);
-    var player = new Player(null);
+    var player = new Player(id);
     this.playerMap[id] = player;
     player.x = playerSnapshot.x;
     player.y = playerSnapshot.y;
@@ -73,9 +73,6 @@ var playState = {
 
     // cursor controls
     game.input.mouse.capture = true;
-
-    //setup player
-    this.createPlayer();
 
     //createEnemies
     this.createEnemies();
@@ -150,12 +147,6 @@ var playState = {
     //this.actorGroup.add(slime);
   },
 
-  createPlayer: function() {
-    this.ownPlayer = new Player(null);
-    this.ownPlayer.addInputEvents();
-    this.actorGroup.add( this.ownPlayer );
-  },
-
   init: function(data) {
     // If the game loads while the window is out of focus, it may hang; disableVisibilityChange should be set to true
     // only once it's fully loaded
@@ -173,6 +164,8 @@ var playState = {
    * Update game
    */
   update: function() {
+    if (!this.ownPlayer) return;
+    
     this.ownPlayer.handleInput(game.input);
 
     game.physics.arcade.collide(this.actorGroup, this.layer);
@@ -223,6 +216,26 @@ var playState = {
     // emit a snapshot of client's own player to the server.
     // this should be called at a regular interval.
     Client.socket.emit("snapshot", this.ownPlayer.getSnapshot());
+  },
+
+  initOwnPlayer: function(data) {
+    console.log(`Init own player with id ${data.id}`);
+    this.ownPlayer = new Player(data.id);
+    this.ownPlayer.addInputEvents();
+    this.actorGroup.add( this.ownPlayer );
+     // position player
+    var player_position = this.findObjectsByType( 'start', this.map, 'objects' );
+    if ( player_position[0] ) {
+      // use the first result - there should only be 1 start point per level
+      // if there isn't we'll just ignore the others
+      this.ownPlayer.x = player_position[0].x + ( this.tile_size / 2 );
+      this.ownPlayer.y = player_position[0].y + 2;
+      this.camera.x = Math.floor( this.ownPlayer.x / this.width );
+      this.camera.y = Math.floor( this.ownPlayer.y / this.height );
+      // position camera
+      game.camera.follow(this.ownPlayer);
+      game.camera.bounds = null;
+    }
   },
 
   processServerUpdate: function(updatePacket) {
@@ -563,23 +576,6 @@ var playState = {
     this.map.createFromObjects( 'objects', 61, 'tilemap', 60, true, false, this.groupDoors );
     this.map.createFromObjects( 'objects', 62, 'tilemap', 61, true, false, this.groupScrolls );
     this.map.createFromObjects( 'objects', 63, 'tilemap', 62, true, false, this.groupMilk );
-
-    // position player
-    var player_position = this.findObjectsByType( 'start', this.map, 'objects' );
-
-    if ( player_position[0] ) {
-      // use the first result - there should only be 1 start point per level
-      // if there isn't we'll just ignore the others
-      this.ownPlayer.x = player_position[0].x + ( this.tile_size / 2 );
-      this.ownPlayer.y = player_position[0].y + 2;
-
-      this.camera.x = Math.floor( this.ownPlayer.x / this.width );
-      this.camera.y = Math.floor( this.ownPlayer.y / this.height );
-
-      // position camera
-      game.camera.follow(this.ownPlayer);
-      game.camera.bounds = null;
-    }
 
     // position slime and config with navmesh
     var slimePosition = this.findObjectsByType('slime', this.map, 'objects');

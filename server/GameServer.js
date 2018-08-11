@@ -8,7 +8,7 @@ var GameServer = {
   isMapLoaded: false, // whether server loaded the map yet
   lastEntityId: 0, // Id of last entity created
   lastUpdatedTime: performance.now(),
-  layers: [], // map layers
+  layers: [], // map layers. each layer is a matrix of tile indices, ix'd by [row][column]
   map: null, // object containing world map data
   numConnectedChanged: false,
   objects: {}, // GameObjects from map
@@ -48,8 +48,81 @@ GameServer.deleteSocketId = function(socketId) {
 //==============================================
 // Read map and set up world
 
+var Body = require("./Body");
+var util = require("./util");
+
 GameServer.readMap = function() {
   // TODO
+
+  fs.readFile("./static/assets/levels/map.json", function(err, data) {
+    if (err) throw err;
+
+    GameServer.map = JSON.parse(data);
+    GameServer.objects = {};
+    GameServer.layers = [];
+    GameServer.tilesets = {};
+
+    for (var l = 0; l < GameServer.map.layers.length; l++) {
+      var layer = GameServer.map.layers[l];
+      if (layer.type == 'objectgroup') {
+        GameServer.objects[layer.name] = layer.objects;
+      } else if (layer.type == 'tilelayer') {
+        // Each layer in GameServer.layers will be a 2D array indexed by [row][column], like a matrix
+        var newLayer = [];
+        while (layer.data.length) {
+          newLayer.push(layer.data.splice(0, layer.width));
+        }
+        GameServer.layers.push(newLayer);
+      }
+    }
+    for (var t = 0; t < GameServer.map.tilesets.length; t++) {
+      var tileset = GameServer.map.tilesets[t];
+      GameServer.tilesets[tileset.name] = tileset.tileproperties;
+    }
+
+    // iterate over all tiles and work out collisions
+    var tileProperties = GameServer.tilesets["tiles"];
+    var tilesWithCollision =
+      Object
+        .keys(tileProperties)
+        .filter(function(index) {
+          return tileProperties[index].hasCollision;
+        })
+        .map(function(index) {
+          return Number(index) + 1;
+        });
+    var tilesWithFalling =
+      Object
+        .keys(tileProperties)
+        .filter(function(index) {
+          return tileProperties[index].canFall;
+        })
+        .map(function(index) {
+          return Number(index) + 1;
+        });
+
+    console.log(tilesWithCollision);
+    // add bodies for tiles with collision to the world
+    var mainLayer = GameServer.layers[0];
+    var tileWidth = GameServer.map.tilewidth;
+    for (var y = 0; y < mainLayer.length; y++) {
+      for (var x = 0; x < mainLayer[0].length; x++) {
+        var tileIndex = mainLayer[y][x];
+        if (tileIndex in tilesWithCollision) {
+          var body = new Body(x * tileWidth, y * tileWidth,0);
+          var rect = new p2.Box({
+            width: util.pxToP2(tileWidth),
+            height: util.pxToP2(tileWidth)
+          });
+          body.addShape(rect, util.pxToP2(tileWidth/2.0), util.pxToP2(tileWidth/2.0));
+          GameServer.world.addBody(body);
+          console.log(`Add tile body with collision at x:${x*tileWidth} y:${y*tileWidth}`)
+        }
+      }
+    }
+
+  });
+
   GameServer.world = (function() {
     var world = new p2.World();
     // turn off things we aren't using
@@ -83,7 +156,6 @@ GameServer.isPlayerIdFree = function(id) {
 
 GameServer.addNewPlayer = function(socket, data) {
   var player = new Player("new player", socket.id);
-  GameServer.world.addBody(player.body);
   GameServer.addPlayerId(socket.id, player.id);
   // add player to all relevant data structures
   GameServer.players[player.id] = player;
@@ -100,8 +172,7 @@ GameServer.addNewPlayer = function(socket, data) {
 GameServer.removePlayerBySocketId = function(socketId) {
   var player = GameServer.getPlayerBySocketId(socketId);
   //player.setProperty("connected", false);
-  player.isAlive = false;
-  GameServer.world.removeBody(player.body);
+  player.destroy();
   delete GameServer.players[player.id];
   GameServer.numConnectedChanged = true;
   GameServer.deleteSocketId(socketId);
@@ -153,7 +224,9 @@ GameServer.processClientSnapshot = function(socketId, snapshot) {
 // Client initialization stuff
 
 GameServer.createInitializationPacket = function(playerId) {
-  return {};
+  return {
+    id: playerId,
+  };
 };
 
 GameServer.determineStartingPosition = function() {

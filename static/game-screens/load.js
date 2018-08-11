@@ -45,6 +45,7 @@ var loadState = {
         game.load.image('empty_convict', 'images/empty_convict.png');
         game.load.image('particle', 'images/particle.png');
         game.load.image('particle_sm', 'images/particle_sm.png');
+        game.load.image('muzzle_flash_sm', 'images/muzzle_flash_sm.png');
         game.load.spritesheet('particle_sm_impact', 'images/particle_sm_impact.png', 16, 16);
         game.load.image('particle_overlay', 'images/particle_overlay.png');
         game.load.image('particle_overlay_red_lg', 'images/particle_overlay_red_lg.png');

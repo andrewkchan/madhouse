@@ -15,6 +15,15 @@ function ServerBullet(bulletType, shooterId, localBulletId, x, y) {
   this.x = x;
   this.y = y;
 
+  // configure collision of body, etc.
+  var bodyRect = new p2.Box({
+    width: util.pxToP2(6),
+    height: util.pxToP2(6),
+  });
+  bodyRect.collisionMask = Group.ACTORS | Group.BULLETS | Group.TILES;
+  bodyRect.collisionGroup = Group.BULLETS;
+  this.body.addShape(bodyRect);
+
   // whether the obj has recently been changed and needs to resync w/ clients
   this.isDirty = true;
 

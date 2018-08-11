@@ -1,5 +1,6 @@
-function Player(navMesh) {
-  Actor.call(this, 'player', 0, 0, 'empty_convict');
+function Player(id) {
+  Actor.call(this, id, 'player', 0, 0, 'empty_convict');
+  this.animSet = "andrew";
   this.weaponManager = new DualUziManager(this);
   this.weaponManager.initBackgroundAnims();
   PlayerAnimUtil.initSpriteWithAnims(this);
@@ -428,7 +429,7 @@ var PlayerAnimUtil = {
     player.anchor.setTo( 0.5, 0.5 );
 
     // player visible sprite
-    player._main = player.addChild(game.make.sprite(0, 0, 'andrew'));
+    player._main = player.addChild(game.make.sprite(0, 0, player.animSet));
     player._main.anchor.setTo( 0.5, 0.5 );
 
     // player animations

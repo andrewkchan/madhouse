@@ -97,7 +97,7 @@ DualUziManager.prototype.initForegroundAnims = function() {
   player._weaponHandD2.anchor.setTo(0.5, 0.5);
   player._weaponHandD2._recoilTween =
     game.add.tween(player._weaponHandD2).to({ y: 5 }, 20, Phaser.Easing.Linear.None);
-  player._weaponHandD._recoilTween.chain(
+  player._weaponHandD2._recoilTween.chain(
     game.add.tween(player._weaponHandD2).to({ y: 9 }, 50, Phaser.Easing.Linear.None)
   );
   player._weaponHandD2._gun = player._weaponHandD2.addChild(game.make.sprite(0, 0, 'uzi'));
@@ -110,24 +110,24 @@ DualUziManager.prototype.initForegroundAnims = function() {
 DualUziManager.prototype.initBackgroundAnims = function() {
   var player = this.player;
 
-  player._weaponHandU = player.addChild(game.make.sprite(-6, 8, 'empty_convict_hand'));
+  player._weaponHandU = player.addChild(game.make.sprite(-6, 7, 'empty_convict_hand'));
   player._weaponHandU.anchor.setTo(0.5, 0.5);
   player._weaponHandU._recoilTween =
-    game.add.tween(player._weaponHandU).to({ y: 11 }, 20, Phaser.Easing.Linear.None);
+    game.add.tween(player._weaponHandU).to({ y: 10 }, 20, Phaser.Easing.Linear.None);
   player._weaponHandU._recoilTween.chain(
-    game.add.tween(player._weaponHandU).to({ y: 8 }, 50, Phaser.Easing.Linear.None)
+    game.add.tween(player._weaponHandU).to({ y: 7 }, 50, Phaser.Easing.Linear.None)
   );
   player._weaponHandU._gun = player._weaponHandU.addChild(game.make.sprite(0, 0, 'uzi'));
   player._weaponHandU._gun.anchor.set(0.35, 0.45);
   player._weaponHandU._hand = player._weaponHandU.addChild(game.make.sprite(0, 0, 'convict_hand'));
   player._weaponHandU._hand.anchor.setTo(0.5, 0.5);
 
-  player._weaponHandU2 = player.addChild(game.make.sprite(1, 8, 'empty_convict_hand'));
+  player._weaponHandU2 = player.addChild(game.make.sprite(1, 7, 'empty_convict_hand'));
   player._weaponHandU2.anchor.setTo(0.5, 0.5);
   player._weaponHandU2._recoilTween =
-    game.add.tween(player._weaponHandU).to({ y: 11 }, 20, Phaser.Easing.Linear.None);
+    game.add.tween(player._weaponHandU2).to({ y: 10 }, 20, Phaser.Easing.Linear.None);
   player._weaponHandU2._recoilTween.chain(
-    game.add.tween(player._weaponHandU).to({ y: 8 }, 50, Phaser.Easing.Linear.None)
+    game.add.tween(player._weaponHandU2).to({ y: 7 }, 50, Phaser.Easing.Linear.None)
   );
   player._weaponHandU2._gun = player._weaponHandU2.addChild(game.make.sprite(0, 0, 'uzi'));
   player._weaponHandU2._gun.anchor.set(0.35, 0.45);

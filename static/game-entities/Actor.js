@@ -1,10 +1,11 @@
 var FLASH_FRAMES = 5; // frames between flashes for flashing actors
 
 // Actor is the topmost class encompassing all "living" sprites, be it players, NPC or monsters (not items)
-function Actor(name, x, y, key) {
+function Actor(id, name, x, y, key) {
   // key is the string indicating which atlas to use
   Phaser.Sprite.call(this, game, x, y, key); // Call to constructor of parent
   game.add.existing(this);
+  this.id = id; // server-defined actor ID
   this.alive = true;
   this.name = name;
   this.speed = 70;

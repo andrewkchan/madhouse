@@ -12,10 +12,13 @@ function MovingEntity(x, y) {
     body.damping = 0; // no air resistance
     body.collisionResponse = false; // no contact forces
 
-    //var shape = new p2.Circle({ radius: pxToP2(15) });
-    // TODO add to collision group etc.
+    GameServer.world.addBody(body);
     return body;
   })();
 }
 
 module.exports = MovingEntity;
+
+MovingEntity.prototype.destroy = function() {
+  GameServer.world.removeBody(this.body);
+};
