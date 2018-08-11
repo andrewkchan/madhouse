@@ -44,8 +44,10 @@ WeaponManager.prototype.update = function(angle, isVisible = true) {
 WeaponManager.prototype.onFire = function(bullet, weapon) {
   // called when the phaser weapon object successfully fires a single bullet
   this.bulletFiredEvent.syncWithBullet(bullet);
-  Client.socket.emit("localBulletFired", this.bulletFiredEvent);
-  console.log("Emitting localBulletFired", this.bulletFiredEvent);
+  if (this.player.isOwnPlayer) {
+    // only emit own player's local fire events
+    Client.socket.emit("localBulletFired", this.bulletFiredEvent);
+  }
 };
 
 function LocalBulletFiredEvent(

@@ -25,4 +25,5 @@ Client.socket.on("remove", function(data) {
 
 Client.socket.on("serverBulletFired", function(data) {
   console.log("serverBulletFired", data);
+  playState.onServerBulletFired(data);
 });

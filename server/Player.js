@@ -17,15 +17,9 @@ function Player(name, socketId) {
   this.bulletMap = {};
 
   // configure collision of body, etc.
-  // Note: p2 shapes are offset relative to center of mass.
-  // OTOH phaser sprite x,y are the top-left corner.
-  var bodyRect = new p2.Box({
-    width: util.pxToP2(8),
-    height: util.pxToP2(12),
-  });
-  bodyRect.collisionMask = Group.ACTORS | Group.BULLETS | Group.TILES | Group.OBJECTS;
-  bodyRect.collisionGroup = Group.ACTORS;
-  this.body.addShape(bodyRect);
+  var colGroup = Group.ACTORS;
+  var colMask = Group.ACTORS | Group.BULLETS | Group.TILES | Group.OBJECTS;
+  this.body.addBox(8, 12, colGroup, colMask, 8/2, 12/2); // TODO figure out correct offset
 
   this.body.x = startingPosition.x;
   this.body.y = startingPosition.y;
@@ -51,8 +45,8 @@ Player.prototype.getSnapshot = function() {
     x: this.body.x,
     y: this.body.y,
     velocity: {
-      x: this.body.velocity[0],
-      y: this.body.velocity[1],
+      x: this.body.velocity.x,
+      y: this.body.velocity.y,
     },
     currentStateName: this.currentStateName,
     cursorAngle: this.cursorAngle,
@@ -64,8 +58,8 @@ Player.prototype.syncWithSnapshot = function(snapshot) {
   // sync to a client snapshot.
   this.body.x = snapshot.x;
   this.body.y = snapshot.y;
-  this.body.velocity[0] = snapshot.velocity.x;
-  this.body.velocity[1] = snapshot.velocity.y;
+  this.body.velocity.x = snapshot.velocity.x;
+  this.body.velocity.y = snapshot.velocity.y;
 
   this.currentStateName = snapshot.currentStateName;
   this.cursorAngle = snapshot.cursorAngle;

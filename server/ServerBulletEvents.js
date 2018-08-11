@@ -1,3 +1,5 @@
+var util = require("./util");
+
 function ServerBulletFiredEvent(
   x,
   y,
@@ -20,8 +22,8 @@ function ServerBulletFiredEvent(
 ServerBulletFiredEvent.prototype.syncWithBullet = function(bullet) {
   this.x = bullet.x;
   this.y = bullet.y;
-  this.velocity.x = bullet.body.velocity[0];
-  this.velocity.y = bullet.body.velocity[1];
+  this.velocity.x = bullet.body.velocity.x;
+  this.velocity.y = bullet.body.velocity.y;
   this.shooterId = bullet.shooterId;
   this.localBulletId = bullet.localBulletId;
 };

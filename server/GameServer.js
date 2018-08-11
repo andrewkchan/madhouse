@@ -109,15 +109,11 @@ GameServer.readMap = function() {
         var tileIndex = mainLayer[y][x];
         if (tileIndex in tilesWithCollision) {
           var body = new Body(x * tileWidth, y * tileWidth,0);
-          var rect = new p2.Box({
-            width: util.pxToP2(tileWidth),
-            height: util.pxToP2(tileWidth)
-          });
-          rect.collisionGroup = Group.TILES;
-          rect.collisionMask = Group.ACTORS | Group.BULLETS;
-          body.addShape(rect, util.pxToP2(tileWidth/2.0), util.pxToP2(tileWidth/2.0));
+          var colGroup = Group.TILES;
+          var colMask = Group.ACTORS | Group.BULLETS;
+          body.addBox(tileWidth, tileWidth, colGroup, colMask, tileWidth/2.0, tileWidth/2.0);
           GameServer.world.addBody(body);
-          console.log(`Add tile body with collision at x:${x*tileWidth} y:${y*tileWidth}`)
+          console.log(`Add tile body with collision at x:${x*tileWidth} y:${y*tileWidth}`);
         }
       }
     }

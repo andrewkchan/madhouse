@@ -13,13 +13,9 @@ function ServerBullet(bulletType, shooterId, localBulletId, x, y) {
   this.y = y;
 
   // configure collision of body, etc.
-  var bodyRect = new p2.Box({
-    width: util.pxToP2(6),
-    height: util.pxToP2(6),
-  });
-  bodyRect.collisionMask = Group.ACTORS | Group.BULLETS | Group.TILES;
-  bodyRect.collisionGroup = Group.BULLETS;
-  this.body.addShape(bodyRect);
+  var collisionGroup = Group.BULLETS;
+  var collisionMask = Group.ACTORS | Group.BULLETS | Group.TILES;
+  this.body.addBox(6, 6, collisionGroup, collisionMask);
 }
 
 ServerBullet.prototype = Object.create(MovingEntity.prototype);
@@ -39,8 +35,8 @@ ServerBullet.fromLocalBulletFiredEvent = function(shooterId, data) {
     data.x,
     data.y,
   );
-  s.body.velocity[0] = data.velocity.x;
-  s.body.velocity[1] = data.velocity.y;
+  s.body.velocity.x = data.velocity.x;
+  s.body.velocity.y = data.velocity.y;
   return s;
 };
 

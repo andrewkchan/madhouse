@@ -1,5 +1,6 @@
-function Player(id) {
+function Player(id, isOwnPlayer = false) {
   Actor.call(this, id, 'player', 0, 0, 'empty_convict');
+  this.isOwnPlayer = isOwnPlayer;
   this.animSet = "andrew";
   this.weaponManager = new DualUziManager(this);
   this.weaponManager.initBackgroundAnims();
@@ -55,7 +56,20 @@ Player.prototype.flash = function(isFlashing) {
 };
 Player.prototype.peekState = function() {
   return this.playerStateMachine.peekState();
-}
+};
+Player.prototype.applyServerBulletFiredEvent = function(e) {
+  // maybe move this into weaponmanager?
+  // to allow for better handling of muzzle flash, anims, etc.
+  this._weapon.onFire.addOnce(function(bullet, weapon) {
+    bullet.body.velocity.x = velocityX;
+    bullet.body.velocity.y = velocityY;
+    this.bulletMap[e.localBulletId] = bullet;
+  }, this);
+  var wasFired = this._weapon.fire(new Phaser.Point(e.x, e.y));
+  if (wasFired) {
+    this.weaponManager.recoilWeaponHand(this.peekState().cursorAngle || 1.0);
+  }
+};
 
 //=============================================
 // Networking code

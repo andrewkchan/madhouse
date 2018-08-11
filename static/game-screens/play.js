@@ -165,7 +165,7 @@ var playState = {
    */
   update: function() {
     if (!this.ownPlayer) return;
-    
+
     this.ownPlayer.handleInput(game.input);
 
     game.physics.arcade.collide(this.actorGroup, this.layer);
@@ -220,7 +220,7 @@ var playState = {
 
   initOwnPlayer: function(data) {
     console.log(`Init own player with id ${data.id}`);
-    this.ownPlayer = new Player(data.id);
+    this.ownPlayer = new Player(data.id, true);
     this.ownPlayer.addInputEvents();
     this.actorGroup.add( this.ownPlayer );
      // position player
@@ -235,6 +235,13 @@ var playState = {
       // position camera
       game.camera.follow(this.ownPlayer);
       game.camera.bounds = null;
+    }
+  },
+
+  onServerBulletFired: function(data) {
+    var shooter = this.playerMap[data.shooterId];
+    if (shooter) {
+      shooter.applyServerBulletFiredEvent(data);
     }
   },
 
