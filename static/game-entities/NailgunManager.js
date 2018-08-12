@@ -10,7 +10,7 @@ function NailgunManager(player) {
   this.player._weapon.fireRate = 5;
 }
 
-NailgunManager.prototype = Object.create(WeaponManager);
+NailgunManager.prototype = Object.create(WeaponManager.prototype);
 NailgunManager.prototype.constructor = NailgunManager;
 NailgunManager.prototype.destroy = function() {
   this.player._weapon.destroy();

@@ -1,5 +1,5 @@
 var Body = require("./Body");
-var CollisionGroup = require("./CollisionGroup");
+var Group = require("./CollisionGroup");
 var GameServer = require("./GameServer");
 
 // Serverside equivalent of client Actor.

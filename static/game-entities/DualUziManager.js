@@ -12,7 +12,7 @@ function DualUziManager(player) {
   this.dualWieldToggle = true;
 }
 
-DualUziManager.prototype = Object.create(WeaponManager);
+DualUziManager.prototype = Object.create(WeaponManager.prototype);
 DualUziManager.prototype.constructor = DualUziManager;
 DualUziManager.prototype.destroy = function() {
   this.player._weapon.destroy();

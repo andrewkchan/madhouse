@@ -1,8 +1,8 @@
 function Player(id, isOwnPlayer = false) {
   Actor.call(this, id, 'player', 0, 0, 'empty_convict');
   this.isOwnPlayer = isOwnPlayer;
-  this.animSet = "andrew";
-  this.weaponManager = new DualUziManager(this);
+  this.animSet = "luciano";
+  this.weaponManager = new RevolverManager(this);
   this.weaponManager.initBackgroundAnims();
   PlayerAnimUtil.initSpriteWithAnims(this);
   this.weaponManager.initForegroundAnims();
@@ -105,8 +105,8 @@ Player.prototype.getSnapshot = function() {
   // get a trimmed view of the player properties to send to the server.
   this.snapshot.x = this.x;
   this.snapshot.y = this.y;
-  this.snapshot.velocity.x = this.body.velocity.x;
-  this.snapshot.velocity.y = this.body.velocity.y;
+  this.snapshot.velocity.x = this.body ? this.body.velocity.x : 0;
+  this.snapshot.velocity.y = this.body ? this.body.velocity.y : 0;
   this.snapshot.currentStateName = this.peekState().name;
   this.snapshot.cursorAngle = this.peekState().cursorAngle || 1.0;
   this.snapshot.weaponName = this.weaponManager ? this.weaponManager.name : "NullWeapon";

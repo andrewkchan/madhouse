@@ -58,10 +58,10 @@ World.prototype = Object.create(p2.World.prototype);
 World.prototype.constructor = World;
 
 World.prototype.debugBodies = function() {
+  console.log("============");
   this.bodies.forEach(function(body) {
     var entity = body.entity;
-    if (entity) {
-      // console.log("============");
+    if (entity && entity.id) {
       console.log(`Body with entity id ${entity.id}, type ${entity.constructor.name} at (${body.x}, ${body.y}), velocity: (${body.velocity[0]}, ${body.velocity[1]})`);
       // body.shapes.forEach(function(shape) {
       //   console.log(`width: ${shape.width} height: ${shape.height}`);
@@ -70,6 +70,7 @@ World.prototype.debugBodies = function() {
       //console.log(`Body at x:${body.x} y:${body.y}`);
     }
   });
+  console.log("============");
 };
 
 module.exports = World;

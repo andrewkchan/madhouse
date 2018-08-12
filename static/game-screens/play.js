@@ -178,20 +178,20 @@ var playState = {
       null,
       this
     );
-    game.physics.arcade.collide(
-      this.ownPlayer._weapon.bullets,
-      this.layer,
-      this.onBulletCollision,
-      null,
-      this
-    );
-    game.physics.arcade.overlap(
-      this.ownPlayer._weapon.bullets,
-      this.actorGroup,
-      this.onBulletCollision,
-      null,
-      this
-    );
+    // game.physics.arcade.collide(
+    //   this.ownPlayer._weapon.bullets,
+    //   this.layer,
+    //   this.onBulletCollision,
+    //   null,
+    //   this
+    // );
+    // game.physics.arcade.overlap(
+    //   this.ownPlayer._weapon.bullets,
+    //   this.actorGroup,
+    //   this.onBulletCollision,
+    //   null,
+    //   this
+    // );
     game.physics.arcade.overlap( this.ownPlayer, this.groupKeys, this.key_take, null, this );
     game.physics.arcade.overlap( this.ownPlayer, this.groupMilk, this.milk_take, null, this );
     game.physics.arcade.overlap( this.ownPlayer, this.groupDrinks, this.drink_take, null, this );
@@ -247,6 +247,7 @@ var playState = {
 
   onServerBulletDestroyed: function(data) {
     var shooter = this.playerMap[data.shooterId];
+    if (data.shooterId === this.ownPlayer.id) shooter = this.ownPlayer;
     if (shooter) {
       shooter.applyServerBulletDestroyedEvent(data);
     }
@@ -558,6 +559,8 @@ var playState = {
         .map(function(index) {
           return Number(index) + 1;
         });
+
+    console.log(tilesWithCollision, tilesWithFalling);
 
     this.map.setCollision(tilesWithCollision);
     // water collision detection

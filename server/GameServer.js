@@ -8,7 +8,7 @@ var GameServer = {
   isMapLoaded: false, // whether server loaded the map yet
   lastEntityId: 0, // Id of last entity created
   lastUpdatedTime: performance.now(),
-  layers: [], // map layers. each layer is a matrix of tile indices, ix'd by [row][column]
+  layers: [], // map layers. each layer is a matrix of Tile objects, ix'd by [row][column]
   map: null, // object containing world map data
   numConnectedChanged: false,
   objects: {}, // GameObjects from map
@@ -48,9 +48,7 @@ GameServer.deleteSocketId = function(socketId) {
 //==============================================
 // Read map and set up world
 
-var Body = require("./Body");
-var util = require("./util");
-var Group = require("./CollisionGroup");
+var Tile = require("./Tile");
 var World = require("./World");
 
 GameServer.readMap = function() {
@@ -105,22 +103,20 @@ GameServer.readMap = function() {
         });
 
     // add bodies for tiles with collision to the world
-    var mainLayer = GameServer.layers[0];
+    // now each layer is a 2d array of Tile objects.
     var tileWidth = GameServer.map.tilewidth;
-    for (var y = 0; y < mainLayer.length; y++) {
-      for (var x = 0; x < mainLayer[0].length; x++) {
-        var tileIndex = mainLayer[y][x];
-        if (tileIndex in tilesWithCollision) {
-          var body = new Body(null, x * tileWidth + tileWidth/2.0, y * tileWidth + tileWidth/2.0, 0);
-          var colGroup = Group.TILES;
-          var colMask = Group.ACTORS | Group.BULLETS;
-          body.addBox(tileWidth, tileWidth, colGroup, colMask, 0, 0);
-          //console.log(`Tile of width ${body.shapes[0].width} added at ${body.x}, ${body.y}`);
-          GameServer.world.addBody(body);
+    for (var l = 0; l < GameServer.layers.length; l++) {
+      var mainLayer = GameServer.layers[l];
+      for (var y = 0; y < mainLayer.length; y++) {
+        for (var x = 0; x < mainLayer[0].length; x++) {
+          var tileIndex = mainLayer[y][x];
+          // only add collision for the layer 0.
+          var hasCollision = tileIndex in tilesWithCollision && l === 0;
+          mainLayer[y][x] = new Tile(tileIndex, x, y, tileWidth, hasCollision);
+          //console.log(mainLayer[y][x].toString());
         }
       }
     }
-
   });
 
   GameServer.isMapLoaded = true;

@@ -2,7 +2,7 @@
 
 function WeaponManager(player, name="DefaultWeapon") {
   this.player = player;
-  player._weapon = game.add.weapon(0, "particle");
+  this.player._weapon = game.add.weapon(0, "particle");
 
   this.player._weapon.onFire.add(this.onFire, this);
   this.bulletFiredEvent = new LocalBulletFiredEvent(0, 0, 0, 0);
@@ -47,6 +47,9 @@ WeaponManager.prototype.onFire = function(bullet, weapon) {
   if (this.player.isOwnPlayer) {
     // only emit own player's local fire events
     Client.socket.emit("localBulletFired", this.bulletFiredEvent);
+    // other clients must populate bullet map by receiving server events.
+    // here, we can populate the bullet map with our local event.
+    this.player.bulletMap[this.bulletFiredEvent.localBulletId] = bullet;
   }
 };
 

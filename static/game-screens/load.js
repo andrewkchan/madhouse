@@ -30,7 +30,7 @@ var loadState = {
 
         game.load.spritesheet( 'confetti', 'images/confetti.png', 2, 2 );
         game.load.spritesheet('slime', 'images/slime.png', 25, 30);
-        game.load.spritesheet( 'convict', 'images/luciano.png', 26, 32, 96, 0, 0 );
+        game.load.spritesheet( 'luciano', 'images/luciano.png', 26, 32, 96, 0, 0 );
         game.load.spritesheet( 'brian', 'images/brian.png', 26, 32, 96, 0, 0 );
         game.load.spritesheet( 'andrew', 'images/andrew.png', 26, 32, 96, 0, 0 );
         game.load.spritesheet( 'tilemap', 'images/tiles.png', 8, 8 );

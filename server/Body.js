@@ -2,6 +2,7 @@ var p2 = require("p2");
 var util = require("./util");
 
 function Body(parentEntity, x, y, mass = 1) {
+  // if mass == 0, the body type is STATIC, e.g. it does not move.
   p2.Body.call(this, {
     mass: mass,
     position: [util.pxToP2(x), util.pxToP2(y)]

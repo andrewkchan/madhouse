@@ -3,14 +3,13 @@ function RevolverManager(player) {
 
   // the weapon gameobject
   this.player._weapon.bulletClass = RevolverBullet;
-  this.player._weapon.setBulletBodyOffset(6, 6, 0, 0);
   this.player._weapon.createBullets(-1);
   this.player._weapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
   this.player._weapon.bulletSpeed = 300;
   this.player._weapon.fireRate = 5;
 }
 
-RevolverManager.prototype = Object.create(WeaponManager);
+RevolverManager.prototype = Object.create(WeaponManager.prototype);
 RevolverManager.prototype.constructor = RevolverManager;
 RevolverManager.prototype.destroy = function() {
   this.player._weapon.destroy();

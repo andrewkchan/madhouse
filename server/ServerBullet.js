@@ -26,16 +26,21 @@ function ServerBullet(bulletType, shooterId, localBulletId, x, y) {
 ServerBullet.prototype = Object.create(MovingEntity.prototype);
 ServerBullet.prototype.constructor = ServerBullet;
 
+ServerBullet.prototype.impact = function() {
+  this.body.velocity.x = 0;
+  this.body.velocity.y = 0;
+  GameServer.server.broadcastServerBulletDestroyed(this.bulletDestroyedEvent);
+  this.willDestroy = true; // mark for deletion at tick finish
+};
+
 ServerBullet.prototype.collideWith = function(entity) {
   if (entity.id !== this.shooterId) {
-    GameServer.server.broadcastServerBulletDestroyed(this.bulletDestroyedEvent);
-    this.willDestroy = true; // mark for deletion at tick finish
+    this.impact();
   }
 };
 
 ServerBullet.prototype.collideWithWall = function() {
-  GameServer.server.broadcastServerBulletDestroyed(this.bulletDestroyedEvent);
-  this.willDestroy = true; // mark for deletion at tick finish
+  this.impact();
 };
 
 ServerBullet.EnumBulletTypes = {
