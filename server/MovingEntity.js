@@ -38,5 +38,5 @@ MovingEntity.prototype.update = function() {
   return;
 };
 MovingEntity.prototype.toString = function() {
-  return `[${this.constructor.name}, id:${this.id}, willDestroy:${this.willDestroy}]`;
+  return `[${this.constructor.name}::(${this.body.x}, ${this.body.y}) id:${this.id}, willDestroy:${this.willDestroy}]`;
 };

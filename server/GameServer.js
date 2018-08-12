@@ -111,10 +111,11 @@ GameServer.readMap = function() {
       for (var x = 0; x < mainLayer[0].length; x++) {
         var tileIndex = mainLayer[y][x];
         if (tileIndex in tilesWithCollision) {
-          var body = new Body(null, x * tileWidth, y * tileWidth, 0);
+          var body = new Body(null, x * tileWidth + tileWidth/2.0, y * tileWidth + tileWidth/2.0, 0);
           var colGroup = Group.TILES;
           var colMask = Group.ACTORS | Group.BULLETS;
-          body.addBox(tileWidth, tileWidth, colGroup, colMask, tileWidth/2.0, tileWidth/2.0);
+          body.addBox(tileWidth, tileWidth, colGroup, colMask, 0, 0);
+          //console.log(`Tile of width ${body.shapes[0].width} added at ${body.x}, ${body.y}`);
           GameServer.world.addBody(body);
         }
       }
@@ -236,7 +237,7 @@ GameServer.handleLocalBulletFired = function(player, data) {
   // create a ServerBulletFired event to relay
   if (player) {
     player.applyLocalBulletFiredEvent(data);
-    //GameServer.world.debugBodies();
+    GameServer.world.debugBodies();
     var serverBulletFiredEvent = player.lastBulletFiredEvent;
     return serverBulletFiredEvent;
   }

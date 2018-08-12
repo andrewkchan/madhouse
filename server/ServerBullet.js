@@ -27,8 +27,10 @@ ServerBullet.prototype = Object.create(MovingEntity.prototype);
 ServerBullet.prototype.constructor = ServerBullet;
 
 ServerBullet.prototype.collideWith = function(entity) {
-  GameServer.server.broadcastServerBulletDestroyed(this.bulletDestroyedEvent);
-  this.willDestroy = true; // mark for deletion at tick finish
+  if (entity.id !== this.shooterId) {
+    GameServer.server.broadcastServerBulletDestroyed(this.bulletDestroyedEvent);
+    this.willDestroy = true; // mark for deletion at tick finish
+  }
 };
 
 ServerBullet.prototype.collideWithWall = function() {

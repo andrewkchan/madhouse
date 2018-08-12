@@ -32,16 +32,16 @@ function World(width, height) {
     left: addPlaneBound(0, 0, 1.5707963267948966),
     right: addPlaneBound(width, 0, -1.5707963267948966),
   };
-  this.addBody(this.walls.top);
-  this.addBody(this.walls.bottom);
-  this.addBody(this.walls.left);
-  this.addBody(this.walls.right);
+  // this.addBody(this.walls.top);
+  // this.addBody(this.walls.bottom);
+  // this.addBody(this.walls.left);
+  // this.addBody(this.walls.right);
 
   this.on("beginContact", function(e) {
     // note: tiles do not have entity attributes
     var entityA = e.bodyA.entity;
     var entityB = e.bodyB.entity;
-    console.log(`Collision event with entities A:${entityA} B:${entityB}`);
+    console.log(`Collision event:: entities A:${entityA} B:${entityB}`);
 
     if (entityA && entityB) {
       entityA.collideWith(entityB);

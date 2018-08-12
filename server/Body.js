@@ -66,7 +66,7 @@ Body.prototype.addBox = function(
   bodyRect.collisionGroup = collisionGroup;
   // Note: p2 shapes are offset relative to center of mass.
   // OTOH phaser sprite x,y are the top-left corner.
-  this.addShape(bodyRect, util.pxToP2(offsetX), util.pxToP2(offsetY));
+  this.addShape(bodyRect, [util.pxToP2(offsetX), util.pxToP2(offsetY)]);
 };
 
 module.exports = Body;

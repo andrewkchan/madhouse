@@ -61,8 +61,8 @@ Player.prototype.applyServerBulletFiredEvent = function(e) {
   // maybe move this into weaponmanager?
   // to allow for better handling of muzzle flash, anims, etc.
   this._weapon.onFire.addOnce(function(bullet, weapon) {
-    bullet.body.velocity.x = velocityX;
-    bullet.body.velocity.y = velocityY;
+    bullet.body.velocity.x = e.velocity.x;
+    bullet.body.velocity.y = e.velocity.y;
     this.bulletMap[e.localBulletId] = bullet;
   }, this);
   var wasFired = this._weapon.fire(new Phaser.Point(e.x, e.y));
