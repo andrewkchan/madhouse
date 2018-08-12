@@ -1,6 +1,7 @@
 /* global game, Phaser */
 
 var playState = {
+  enableOptimisticProjectileCollisions: true,
   playerMap: {},
   player_speed: 0,
   player_speed_bonus: 9,
@@ -178,20 +179,26 @@ var playState = {
       null,
       this
     );
-    // game.physics.arcade.collide(
-    //   this.ownPlayer._weapon.bullets,
-    //   this.layer,
-    //   this.onBulletCollision,
-    //   null,
-    //   this
-    // );
-    // game.physics.arcade.overlap(
-    //   this.ownPlayer._weapon.bullets,
-    //   this.actorGroup,
-    //   this.onBulletCollision,
-    //   null,
-    //   this
-    // );
+
+    if (this.enableOptimisticProjectileCollisions) {
+      // if optimistic projectile collisions are enabled, don't wait for a server response
+      // to confirm that our own projectiles collided with something - simulate the collision ourselves.
+      game.physics.arcade.collide(
+        this.ownPlayer._weapon.bullets,
+        this.layer,
+        this.onBulletCollision,
+        null,
+        this
+      );
+      game.physics.arcade.overlap(
+        this.ownPlayer._weapon.bullets,
+        this.actorGroup,
+        this.onBulletCollision,
+        null,
+        this
+      );
+    }
+
     game.physics.arcade.overlap( this.ownPlayer, this.groupKeys, this.key_take, null, this );
     game.physics.arcade.overlap( this.ownPlayer, this.groupMilk, this.milk_take, null, this );
     game.physics.arcade.overlap( this.ownPlayer, this.groupDrinks, this.drink_take, null, this );

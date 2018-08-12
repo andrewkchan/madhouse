@@ -122,6 +122,8 @@ GameServer.readMap = function() {
   GameServer.isMapLoaded = true;
 
   setInterval(GameServer.update, GameServer.UPDATE_RATE);
+  // Note: setInterval makes no guarantees about fulfilling the calls. If application code
+  // blocks the event loop, the callback will only be fulfilled "as close as possible to the time specified".
   return;
 };
 
