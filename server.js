@@ -101,6 +101,10 @@ server.sendUpdate = function(socketId, packet) {
   io.in(socketId).emit("update", packet);
 };
 
+server.broadcastServerBulletDestroyed = function(packet) {
+  io.emit("serverBulletDestroyed", packet);
+};
+
 function quickMedian(arr) {
   var  l = arr.length;
   var n = (l%2 == 0 ? (l/2)-1 : (l-1)/2);

@@ -1,14 +1,16 @@
 var p2 = require("p2");
 var util = require("./util");
 
-function Body(x, y, mass = 1) {
+function Body(parentEntity, x, y, mass = 1) {
   p2.Body.call(this, {
     mass: mass,
-    position: [x, y]
+    position: [util.pxToP2(x), util.pxToP2(y)]
   });
 
+  this.entity = parentEntity; // parent MovingEntity object
+
   this.velocity = (function(p2Velocity) {
-    var proxy = {};
+    var proxy = p2Velocity;
     Object.defineProperty(proxy, "x", {
       get: function() {
         return util.p2ToPx(p2Velocity[0]);
@@ -30,6 +32,7 @@ function Body(x, y, mass = 1) {
 }
 
 Body.prototype = Object.create(p2.Body.prototype);
+Body.prototype.constructor = Body;
 Object.defineProperty(Body.prototype, "x", {
   get: function() {
     return util.p2ToPx(this.position[0]);

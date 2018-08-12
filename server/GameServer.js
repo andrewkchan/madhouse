@@ -51,6 +51,7 @@ GameServer.deleteSocketId = function(socketId) {
 var Body = require("./Body");
 var util = require("./util");
 var Group = require("./CollisionGroup");
+var World = require("./World");
 
 GameServer.readMap = function() {
 
@@ -61,6 +62,8 @@ GameServer.readMap = function() {
     GameServer.objects = {};
     GameServer.layers = [];
     GameServer.tilesets = {};
+
+    GameServer.world = new World(GameServer.map.width * GameServer.map.tilewidth, GameServer.map.height * GameServer.map.tilewidth);
 
     for (var l = 0; l < GameServer.map.layers.length; l++) {
       var layer = GameServer.map.layers[l];
@@ -108,28 +111,20 @@ GameServer.readMap = function() {
       for (var x = 0; x < mainLayer[0].length; x++) {
         var tileIndex = mainLayer[y][x];
         if (tileIndex in tilesWithCollision) {
-          var body = new Body(x * tileWidth, y * tileWidth,0);
+          var body = new Body(null, x * tileWidth, y * tileWidth, 0);
           var colGroup = Group.TILES;
           var colMask = Group.ACTORS | Group.BULLETS;
           body.addBox(tileWidth, tileWidth, colGroup, colMask, tileWidth/2.0, tileWidth/2.0);
           GameServer.world.addBody(body);
-          console.log(`Add tile body with collision at x:${x*tileWidth} y:${y*tileWidth}`);
         }
       }
     }
 
   });
 
-  GameServer.world = (function() {
-    var world = new p2.World();
-    // turn off things we aren't using
-    world.defaultContactMaterial.friction = 0;
-    world.applyGravity = false;
-    world.applySpringForces = false;
-    world.emitImpactEvent = false;
-    return world;
-  })();
   GameServer.isMapLoaded = true;
+
+  setInterval(GameServer.update, GameServer.UPDATE_RATE);
   return;
 };
 
@@ -185,9 +180,23 @@ GameServer.update = function() {
   GameServer.world.step(GameServer.UPDATE_TIMESTEP, deltaTime, 10);
   GameServer.lastUpdatedTime = now;
 
+  // update entity logic
   Object.keys(GameServer.players).forEach(function(key) {
     var player = GameServer.players[key];
     if (player.isAlive) player.update();
+  });
+
+  // clean up entities marked for deletion
+  // clean up player bullets
+  Object.keys(GameServer.players).forEach(function(key) {
+    var player = GameServer.players[key];
+    Object.keys(player.bulletMap).forEach(function(localBulletId) {
+      var bullet = player.bulletMap[localBulletId];
+      if (bullet.willDestroy) {
+        bullet.destroy();
+        delete player.bulletMap[localBulletId];
+      }
+    });
   });
 };
 
@@ -227,7 +236,7 @@ GameServer.handleLocalBulletFired = function(player, data) {
   // create a ServerBulletFired event to relay
   if (player) {
     player.applyLocalBulletFiredEvent(data);
-    console.log(`ServerBulletFired at x:${data.x} y:${data.y}`);
+    //GameServer.world.debugBodies();
     var serverBulletFiredEvent = player.lastBulletFiredEvent;
     return serverBulletFiredEvent;
   }

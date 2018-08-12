@@ -245,6 +245,13 @@ var playState = {
     }
   },
 
+  onServerBulletDestroyed: function(data) {
+    var shooter = this.playerMap[data.shooterId];
+    if (shooter) {
+      shooter.applyServerBulletDestroyedEvent(data);
+    }
+  },
+
   processServerUpdate: function(updatePacket) {
     var self = this;
     var updatePlayerIds = Object.keys(updatePacket.players);

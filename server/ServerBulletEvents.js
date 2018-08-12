@@ -28,4 +28,10 @@ ServerBulletFiredEvent.prototype.syncWithBullet = function(bullet) {
   this.localBulletId = bullet.localBulletId;
 };
 
+function ServerBulletDestroyedEvent(localBulletId, shooterId) {
+  this.localBulletId = localBulletId;
+  this.shooterId = shooterId;
+}
+
 module.exports.ServerBulletFiredEvent = ServerBulletFiredEvent;
+module.exports.ServerBulletDestroyedEvent = ServerBulletDestroyedEvent;

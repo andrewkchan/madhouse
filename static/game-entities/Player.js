@@ -70,6 +70,13 @@ Player.prototype.applyServerBulletFiredEvent = function(e) {
     this.weaponManager.recoilWeaponHand(this.peekState().cursorAngle || 1.0);
   }
 };
+Player.prototype.applyServerBulletDestroyedEvent = function(e) {
+  var bullet = this.bulletMap[e.localBulletId];
+  if (bullet && bullet.alive) {
+    bullet.impact();
+    delete this.bulletMap[e.localBulletId];
+  }
+};
 
 //=============================================
 // Networking code
