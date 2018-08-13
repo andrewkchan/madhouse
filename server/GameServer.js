@@ -111,9 +111,8 @@ GameServer.readMap = function() {
         for (var x = 0; x < mainLayer[0].length; x++) {
           var tileIndex = mainLayer[y][x];
           // only add collision for the layer 0.
-          var hasCollision = tileIndex in tilesWithCollision && l === 0;
+          var hasCollision = (tilesWithCollision.includes(tileIndex)) && (l === 0);
           mainLayer[y][x] = new Tile(tileIndex, x, y, tileWidth, hasCollision);
-          //console.log(mainLayer[y][x].toString());
         }
       }
     }
@@ -176,13 +175,20 @@ GameServer.update = function() {
   // update physics
   var now = performance.now();
   var deltaTime = (now - GameServer.lastUpdatedTime) / 1000.0;
-  GameServer.world.step(GameServer.UPDATE_TIMESTEP, deltaTime, 10);
+  // sometimes the update will fire before map is finished reading, so check if world null
+  if (GameServer.world) GameServer.world.step(GameServer.UPDATE_TIMESTEP, deltaTime, 10);
   GameServer.lastUpdatedTime = now;
 
   // update entity logic
   Object.keys(GameServer.players).forEach(function(key) {
     var player = GameServer.players[key];
-    if (player.isAlive) player.update();
+    if (player.isAlive) {
+      player.update();
+    } else {
+      var startingPosition = GameServer.determineStartingPosition();
+      var respawnEvent = player.respawnAt(startingPosition.x, startingPosition.y);
+      GameServer.server.broadcastPlayerRespawnedEvent(respawnEvent);
+    }
   });
 
   // clean up entities marked for deletion
@@ -235,7 +241,7 @@ GameServer.handleLocalBulletFired = function(player, data) {
   // create a ServerBulletFired event to relay
   if (player) {
     player.applyLocalBulletFiredEvent(data);
-    GameServer.world.debugBodies();
+    //GameServer.world.debugBodies();
     var serverBulletFiredEvent = player.lastBulletFiredEvent;
     return serverBulletFiredEvent;
   }

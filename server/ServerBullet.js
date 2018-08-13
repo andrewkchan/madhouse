@@ -1,6 +1,7 @@
 var MovingEntity = require("./MovingEntity");
 var Group = require("./CollisionGroup");
 var ServerBulletEvents = require("./ServerBulletEvents");
+var EntityEvents = require("./EntityEvents");
 var GameServer = require("./GameServer");
 var util = require("./util");
 var p2 = require("p2");
@@ -35,6 +36,11 @@ ServerBullet.prototype.impact = function() {
 
 ServerBullet.prototype.collideWith = function(entity) {
   if (entity.id !== this.shooterId) {
+    if (entity.constructor.name === "Player" && entity.isAlive) {
+      var e = EntityEvents.EntityTookDamageEvent.fromBullet(this, entity);
+      e = entity.takeDamage(e);
+      GameServer.server.broadcastEntityTookDamage(e);
+    }
     this.impact();
   }
 };

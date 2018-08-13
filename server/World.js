@@ -6,6 +6,11 @@ var ServerBullet = require("./ServerBullet");
 function World(width, height) {
   p2.World.call(this);
 
+  // print out collision events as they occur.
+  // WARNING: this has a huge impact on performance! prints are synchronous, so
+  // printing huge amounts of data can cause the server to miss client updates
+  this.debugCollisions = false;
+
   // turn off things we aren't using
   this.defaultContactMaterial.friction = 0;
   this.applyGravity = false;
@@ -37,11 +42,12 @@ function World(width, height) {
   // this.addBody(this.walls.left);
   // this.addBody(this.walls.right);
 
+  var self = this;
   this.on("beginContact", function(e) {
     // note: tiles do not have entity attributes
     var entityA = e.bodyA.entity;
     var entityB = e.bodyB.entity;
-    console.log(`Collision event:: entities A:${entityA} B:${entityB}`);
+    if (self.debugCollisions) console.log(`Collision event:: entities A:${entityA} B:${entityB}`);
 
     if (entityA && entityB) {
       entityA.collideWith(entityB);
@@ -63,9 +69,6 @@ World.prototype.debugBodies = function() {
     var entity = body.entity;
     if (entity && entity.id) {
       console.log(`Body with entity id ${entity.id}, type ${entity.constructor.name} at (${body.x}, ${body.y}), velocity: (${body.velocity[0]}, ${body.velocity[1]})`);
-      // body.shapes.forEach(function(shape) {
-      //   console.log(`width: ${shape.width} height: ${shape.height}`);
-      // });
     } else {
       //console.log(`Body at x:${body.x} y:${body.y}`);
     }

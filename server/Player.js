@@ -5,6 +5,7 @@ var GameServer = require("./GameServer");
 var Group = require("./CollisionGroup");
 var ServerBullet = require("./ServerBullet");
 var ServerBulletEvents = require("./ServerBulletEvents");
+var EntityEvents = require("./EntityEvents");
 var util = require("./util");
 
 
@@ -13,6 +14,9 @@ function Player(name, socketId) {
   this.name = name;
   this.isAlive = true;
   var startingPosition = GameServer.determineStartingPosition();
+
+  this.health = 6;
+  this.maxHealth = 6;
 
   this.bulletMap = {};
 
@@ -25,9 +29,14 @@ function Player(name, socketId) {
   this.body.y = startingPosition.y;
   this.currentStateName = "IDLE";
   this.cursorAngle = 0;
+
+  // character-specific things
   this.weaponName = "DefaultWeapon";
 
   this.lastBulletFiredEvent = null;
+  this.lastSpawnEvent = new EntityEvents.PlayerRespawnedEvent(this.id, this.body.x, this.body.y, this.maxHealth);
+  // pre-allocate a snapshot
+  this.snapshot = new PlayerSnapshot(this);
 
   this.socketId = socketId; // note socketId != entity id
 }
@@ -37,21 +46,34 @@ Player.prototype.constructor = Player;
 
 module.exports = Player;
 
+function PlayerSnapshot(player) {
+  this.id = player.id;
+  this.name = player.name;
+  this.x = player.x;
+  this.y = player.y;
+  this.velocity = {
+    x: player.body.velocity.x,
+    y: player.body.velocity.y,
+  };
+  this.currentStateName = player.currentStateName;
+  this.cursorAngle = player.cursorAngle;
+  this.weaponName = player.weaponName;
+  this.health = player.health;
+  this.isAlive = player.isAlive;
+}
 Player.prototype.getSnapshot = function() {
   // Trim player object to send to client
-  return {
-    id: this.id,
-    name: this.name,
-    x: this.body.x,
-    y: this.body.y,
-    velocity: {
-      x: this.body.velocity.x,
-      y: this.body.velocity.y,
-    },
-    currentStateName: this.currentStateName,
-    cursorAngle: this.cursorAngle,
-    weaponName: this.weaponName,
-  };
+  var snapshot = this.snapshot;
+  snapshot.x = this.body.x;
+  snapshot.y = this.body.y;
+  snapshot.velocity.x = this.body.velocity.x;
+  snapshot.velocity.y = this.body.velocity.y;
+  snapshot.currentStateName = this.currentStateName;
+  snapshot.cursorAngle = this.cursorAngle;
+  snapshot.weaponName = this.weaponName;
+  snapshot.health = this.health;
+  snapshot.isAlive = this.isAlive;
+  return this.snapshot;
 };
 
 Player.prototype.syncWithSnapshot = function(snapshot) {
@@ -80,4 +102,28 @@ Player.prototype.applyLocalBulletFiredEvent = function(data) {
     );
   }
   this.lastBulletFiredEvent.syncWithBullet(bullet);
+};
+
+// receive an EntityTookDamageEvent and modify it as necessary.
+// returns null (if take no damage) or a modified event.
+Player.prototype.takeDamage = function(entityTookDamageEvent) {
+  if (this.health <= 0 || this.currentStateName === "ROLL") {
+    entityTookDamageEvent.returnToPool();
+    return null;
+  }
+  this.health = Math.max(0, this.health - entityTookDamageEvent.dmg);
+  this.isAlive = this.health > 0;
+  return entityTookDamageEvent;
+};
+Player.prototype.respawnAt = function(x, y) {
+  this.health = this.maxHealth;
+  this.isAlive = true;
+  this.body.x = x;
+  this.body.y = y;
+  this.currentStateName = "IDLE";
+
+  this.lastSpawnEvent.x = x;
+  this.lastSpawnEvent.y = y;
+  this.lastSpawnEvent.health = this.health;
+  return this.lastSpawnEvent;
 };

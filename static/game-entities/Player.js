@@ -1,8 +1,8 @@
 function Player(id, isOwnPlayer = false) {
   Actor.call(this, id, 'player', 0, 0, 'empty_convict');
   this.isOwnPlayer = isOwnPlayer;
-  this.animSet = "luciano";
-  this.weaponManager = new RevolverManager(this);
+  this.animSet = "andrew";
+  this.weaponManager = new DualUziManager(this);
   this.weaponManager.initBackgroundAnims();
   PlayerAnimUtil.initSpriteWithAnims(this);
   this.weaponManager.initForegroundAnims();
@@ -12,11 +12,14 @@ function Player(id, isOwnPlayer = false) {
   // note bullets indep. from the weapon manager b/c can change weapon, but bullets still remain
   this.bulletMap = {};
 
-  this.health = 100;
+  this.health = 6;
+  this.maxHealth = 6;
 
   this.playerStateMachine = StateMachineUtil.createStateMachine(this);
   this.playerStateMachine.pushState(PlayerStateFactory.IDLE());
 
+  // own player's own authoritative snapshot.
+  // to be used by own players only!
   this.snapshot = new PlayerSnapshot(
     this.x,
     this.y,
@@ -25,6 +28,10 @@ function Player(id, isOwnPlayer = false) {
     this.peekState().name,
     this.peekState().cursorAngle || 1.0,
   );
+
+  // buffer to store snapshots from the server.
+  // previous snapshots are used to smoothly interpolate the correct state in the past.
+  this.remoteSnapshots = [];
 }
 Player.prototype = Object.create(Actor.prototype);
 Player.prototype.constructor = Player;
@@ -116,6 +123,7 @@ Player.prototype.syncWithSnapshot = function(playerSnapshot) {
   // sync player properties with a server player snapshot.
   this.x = playerSnapshot.x;
   this.y = playerSnapshot.y;
+  this.health = playerSnapshot.health;
   // player state update methods should handle velocity stuff themselves.
 
   if (this.peekState().name !== playerSnapshot.currentStateName) {
@@ -136,6 +144,65 @@ Player.prototype.syncWithSnapshot = function(playerSnapshot) {
     this.peekState().velocityX = playerSnapshot.velocity.x;
     this.peekState().velocityY = playerSnapshot.velocity.y;
   }
+};
+Player.prototype.interpolate = function(renderTimestamp) {
+  // interpolate the entity's state smoothly between past snapshots to the given render time.
+
+  // drop older snapshots.
+  while (this.remoteSnapshots.length >= 2 && this.remoteSnapshots[1].stamp <= renderTimestamp) {
+    this.remoteSnapshots.shift();
+  }
+
+  if (
+    this.remoteSnapshots.length >= 2 &&
+    this.remoteSnapshots[0].stamp <= renderTimestamp &&
+    renderTimestamp <= this.remoteSnapshots[1].stamp
+  ) {
+    var s0 = this.remoteSnapshots[0];
+    var s1 = this.remoteSnapshots[1];
+    // interpolate between the 2 surrounding authoritative snapshots.
+    var dt = renderTimestamp - s0.stamp;
+    var DT = s1.stamp - s0.stamp;
+    var x0 = s0.x;
+    var x1 = s1.x;
+    var y0 = s0.y;
+    var y1 = s1.y;
+
+    this.x = x0 + (x1 - x0)*dt/DT;
+    this.y = y0 + (y1 - y0)*dt/DT;
+
+    // since we're interpolating position ourselves, don't need velocity
+    this.body.velocity.x = 0;
+    this.body.velocity.y = 0;
+
+    // apply discrete changes only on snapshot boundaries.
+    // e.g. statemachine states, health etc.
+    this.health = s0.health;
+    if (this.peekState().name !== s0.currentStateName) {
+      this.playerStateMachine.popState();
+      var nextState = null;
+      if (s0.currentStateName === "ROLL" || s0.currentStateName === "RECOVER") {
+        nextState = PlayerStateFactory[s0.currentStateName](
+          s0.velocity.x,
+          s0.velocity.y,
+        );
+      } else {
+        nextState = PlayerStateFactory[s0.currentStateName]();
+      }
+
+      if ("velocityX" in nextState) {
+        nextState.velocityX = s0.velocity.x;
+        nextState.velocityY = s0.velocity.y;
+      }
+      this.playerStateMachine.pushState(nextState);
+    }
+
+    // TODO figure out a better way to tween cursor angle
+    this.peekState().cursorAngle = s0.cursorAngle;
+  }
+};
+Player.prototype.pushSnapshot = function(snapshot) {
+  this.remoteSnapshots.push(snapshot);
 };
 
 // Factory for player state objects.
