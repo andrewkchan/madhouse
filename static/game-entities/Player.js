@@ -1,8 +1,8 @@
 function Player(id, isOwnPlayer = false) {
   Actor.call(this, id, 'player', 0, 0, 'empty_convict');
   this.isOwnPlayer = isOwnPlayer;
-  this.animSet = "luciano";
-  this.weaponManager = new RevolverManager(this);
+  this.animSet = "andrew";
+  this.weaponManager = new DualUziManager(this);
   this.weaponManager.initBackgroundAnims();
   PlayerAnimUtil.initSpriteWithAnims(this);
   this.weaponManager.initForegroundAnims();
@@ -12,7 +12,8 @@ function Player(id, isOwnPlayer = false) {
   // note bullets indep. from the weapon manager b/c can change weapon, but bullets still remain
   this.bulletMap = {};
 
-  this.health = 100;
+  this.health = 6;
+  this.maxHealth = 6;
 
   this.playerStateMachine = StateMachineUtil.createStateMachine(this);
   this.playerStateMachine.pushState(PlayerStateFactory.IDLE());
@@ -122,6 +123,7 @@ Player.prototype.syncWithSnapshot = function(playerSnapshot) {
   // sync player properties with a server player snapshot.
   this.x = playerSnapshot.x;
   this.y = playerSnapshot.y;
+  this.health = playerSnapshot.health;
   // player state update methods should handle velocity stuff themselves.
 
   if (this.peekState().name !== playerSnapshot.currentStateName) {
@@ -173,7 +175,9 @@ Player.prototype.interpolate = function(renderTimestamp) {
     this.body.velocity.x = 0;
     this.body.velocity.y = 0;
 
-    // apply statemachine changes only on snapshot boundaries.
+    // apply discrete changes only on snapshot boundaries.
+    // e.g. statemachine states, health etc.
+    this.health = s0.health;
     if (this.peekState().name !== s0.currentStateName) {
       this.playerStateMachine.popState();
       var nextState = null;

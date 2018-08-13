@@ -101,8 +101,20 @@ server.sendUpdate = function(socketId, packet) {
   io.in(socketId).emit("update", packet);
 };
 
+//===========================
+// Server events
+
+server.broadcastEntityTookDamage = function(packet) {
+  packet = server.addStamp(packet);
+  io.emit("entityTookDamage", packet);
+};
 server.broadcastServerBulletDestroyed = function(packet) {
+  packet = server.addStamp(packet);
   io.emit("serverBulletDestroyed", packet);
+};
+server.broadcastPlayerRespawnedEvent = function(packet) {
+  packet = server.addStamp(packet);
+  io.emit("playerRespawned", packet);
 };
 
 function quickMedian(arr) {

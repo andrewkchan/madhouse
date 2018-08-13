@@ -102,8 +102,6 @@ GameServer.readMap = function() {
           return Number(index) + 1;
         });
 
-    console.log(tilesWithCollision);
-
     // add bodies for tiles with collision to the world
     // now each layer is a 2d array of Tile objects.
     var tileWidth = GameServer.map.tilewidth;
@@ -177,13 +175,20 @@ GameServer.update = function() {
   // update physics
   var now = performance.now();
   var deltaTime = (now - GameServer.lastUpdatedTime) / 1000.0;
-  GameServer.world.step(GameServer.UPDATE_TIMESTEP, deltaTime, 10);
+  // sometimes the update will fire before map is finished reading, so check if world null
+  if (GameServer.world) GameServer.world.step(GameServer.UPDATE_TIMESTEP, deltaTime, 10);
   GameServer.lastUpdatedTime = now;
 
   // update entity logic
   Object.keys(GameServer.players).forEach(function(key) {
     var player = GameServer.players[key];
-    if (player.isAlive) player.update();
+    if (player.isAlive) {
+      player.update();
+    } else {
+      var startingPosition = GameServer.determineStartingPosition();
+      var respawnEvent = player.respawnAt(startingPosition.x, startingPosition.y);
+      GameServer.server.broadcastPlayerRespawnedEvent(respawnEvent);
+    }
   });
 
   // clean up entities marked for deletion

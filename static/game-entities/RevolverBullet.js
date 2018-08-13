@@ -17,7 +17,6 @@ RevolverBullet.prototype = Object.create(Phaser.Bullet.prototype);
 RevolverBullet.prototype.constructor = RevolverBullet;
 RevolverBullet.prototype.collideWith = function(actor) {
   if (this.penetrations > 0) {
-      actor.takeDamage(10);
       this.penetrations -= 1;
   }
 };

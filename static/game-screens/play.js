@@ -258,6 +258,23 @@ var playState = {
     }
   },
 
+  onEntityTookDamage: function(data) {
+    if (data.entityId in this.playerMap) {
+      // entity is a player
+      this.playerMap[data.entityId].takeDamage(data.dmg);
+    } else if (data.entityId === this.ownPlayer.id) {
+      this.ownPlayer.takeDamage(data.dmg);
+    }
+  },
+
+  onPlayerRespawned: function(data) {
+    if (data.playerId === this.ownPlayer.id) {
+      this.ownPlayer.reset(data.x, data.y, data.health);
+    } else {
+      this.playerMap[data.playerId].reset(data.x, data.y, data.health);
+    }
+  },
+
   onServerBulletFired: function(data) {
     var shooter = this.playerMap[data.shooterId];
     if (shooter) {
