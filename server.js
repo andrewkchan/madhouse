@@ -74,7 +74,7 @@ server.getNumConnected = function() {
 };
 
 server.getShortStamp = function() {
-  return parseInt(Date.now().toString().substr(-9));
+  return +Date.now();
 }
 
 server.getSocket = function(id) {

@@ -102,6 +102,8 @@ GameServer.readMap = function() {
           return Number(index) + 1;
         });
 
+    console.log(tilesWithCollision);
+
     // add bodies for tiles with collision to the world
     // now each layer is a 2d array of Tile objects.
     var tileWidth = GameServer.map.tilewidth;
@@ -111,9 +113,8 @@ GameServer.readMap = function() {
         for (var x = 0; x < mainLayer[0].length; x++) {
           var tileIndex = mainLayer[y][x];
           // only add collision for the layer 0.
-          var hasCollision = tileIndex in tilesWithCollision && l === 0;
+          var hasCollision = (tilesWithCollision.includes(tileIndex)) && (l === 0);
           mainLayer[y][x] = new Tile(tileIndex, x, y, tileWidth, hasCollision);
-          //console.log(mainLayer[y][x].toString());
         }
       }
     }
@@ -235,7 +236,7 @@ GameServer.handleLocalBulletFired = function(player, data) {
   // create a ServerBulletFired event to relay
   if (player) {
     player.applyLocalBulletFiredEvent(data);
-    GameServer.world.debugBodies();
+    //GameServer.world.debugBodies();
     var serverBulletFiredEvent = player.lastBulletFiredEvent;
     return serverBulletFiredEvent;
   }

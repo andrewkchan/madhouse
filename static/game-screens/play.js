@@ -169,6 +169,15 @@ var playState = {
 
     this.ownPlayer.handleInput(game.input);
 
+    // Compute render timestamp for interpolated entities.
+    var renderTimestamp = +Date.now() - (1000.0/20);
+
+    for (var playerId in this.playerMap) {
+      if (playerId !== this.ownPlayer.id) {
+        this.playerMap[playerId].interpolate(renderTimestamp);
+      }
+    }
+
     game.physics.arcade.collide(this.actorGroup, this.layer);
     game.physics.arcade.collide(this.ownPlayer, this.groupDoors);
 
@@ -213,6 +222,10 @@ var playState = {
 
   //========================================================
   // Client-server sync stuff
+
+  // buffer to hold time-sensitive events from the server.
+  // previous events are used to smoothly interpolate game state in the past.
+  remoteEvents: [],
 
   beginSync: function() {
     var updatesPerSecond = 20; // number of updates to send to server per second
@@ -265,11 +278,11 @@ var playState = {
     var updatePlayerIds = Object.keys(updatePacket.players);
     updatePlayerIds.forEach(function(id) {
       var playerPacket = updatePacket.players[id];
+      playerPacket.stamp = updatePacket.stamp; // add timestamp to each individual snapshot
       if (!(id in self.playerMap)) {
         self.addNewPlayer(id, playerPacket);
       } else {
-        // sync player pos/velocity with server
-        self.playerMap[id].syncWithSnapshot(playerPacket);
+        self.playerMap[id].pushSnapshot(playerPacket);
       }
     });
     // remove any disconnected players
