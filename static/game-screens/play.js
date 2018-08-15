@@ -2,6 +2,7 @@
 
 var playState = {
   enableOptimisticProjectileCollisions: true,
+  interpolationLag: 2, // networked entities are rendered this many frames in the past to make them smooth.
   playerMap: {},
   player_speed: 0,
   player_speed_bonus: 9,
@@ -170,7 +171,7 @@ var playState = {
     this.ownPlayer.handleInput(game.input);
 
     // Compute render timestamp for interpolated entities.
-    var renderTimestamp = +Date.now() - (1000.0/20);
+    var renderTimestamp = +Date.now() - this.interpolationLag*(1000.0/20);
 
     for (var playerId in this.playerMap) {
       if (playerId !== this.ownPlayer.id) {
