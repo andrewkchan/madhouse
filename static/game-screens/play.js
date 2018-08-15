@@ -273,6 +273,7 @@ var playState = {
     } else {
       this.playerMap[data.playerId].reset(data.x, data.y, data.health);
     }
+    console.log(`Respawn player ${data.playerId} at (${data.x}, ${data.y})`);
   },
 
   onServerBulletFired: function(data) {
