@@ -39,7 +39,7 @@ Client.setupConnection = function() {
 };
 Client.socket.on("clock-ponq", function(serverStamp) {
   var latency = +Date.now() - Client.lastSentTime;
-  var clientServerClockDelta = (serverStamp - Client.lastSentTime) - latency/2;
+  var clientServerClockDelta = Client.lastSentTime + latency/2 - serverStamp;
   Client.clientServerClockDeltas.push([clientServerClockDelta]);
 
   Client.clockSamples++;
