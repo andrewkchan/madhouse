@@ -286,7 +286,7 @@ var playState = {
 
   onServerBulletDestroyed: function(data) {
     var shooter = this.playerMap[data.shooterId];
-    if (data.shooterId === this.ownPlayer.id) shooter = this.ownPlayer;
+    if (this.ownPlayer && data.shooterId === this.ownPlayer.id) shooter = this.ownPlayer;
     if (shooter) {
       shooter.applyServerBulletDestroyedEvent(data);
     }
