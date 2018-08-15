@@ -12,7 +12,7 @@ Client.socket = io.connect();
 Client.correctPacketStamp = function(packet) {
   // correct a server timestamp to sync the stamped time with the client clock.
   if ("stamp" in packet) {
-    packet.stamp += Client.medianClockDelta;
+    packet.stamp = (+packet.stamp) + Client.medianClockDelta;
     return packet;
   } else {
     throw new Error("Packet is missing server timestamp");
