@@ -158,7 +158,7 @@ var playState = {
             game.stage.disableVisibilityChange = true;
         }, this);
     }
-    Client.askNewPlayer();
+    Client.setupConnection();
   },
 
   /**
@@ -597,8 +597,6 @@ var playState = {
         .map(function(index) {
           return Number(index) + 1;
         });
-
-    console.log(tilesWithCollision, tilesWithFalling);
 
     this.map.setCollision(tilesWithCollision);
     // water collision detection

@@ -36,6 +36,11 @@ io.on("connection", function(socket) {
     socket.latency = quickMedian(socket.pings.slice(0)); // quickMedian used the quickselect algorithm to compute the median of a list of values
   });
 
+  socket.on("clock-pinq", function(data) {
+    console.log("clock-pinq");
+    socket.emit("clock-ponq", +Date.now());
+  });
+
   socket.on("ask-init", function(data) {
     if (!GameServer.isMapLoaded) {
       socket.emit("wait");

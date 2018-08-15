@@ -554,7 +554,7 @@ var PlayerAnimUtil = {
     player._main.animations.add('idle_down', [46, 47, 48], 4, true);
     player._main.animations.add('idle_up', [29, 30, 31], 4, true);
     player._main.animations.add('fall', [86, 87, 88, 89], 10, false);
-    player._main.animations.add('die', [91, 92, 93, 94, 95, 96, 97], 5, false);
+    player._main.animations.add('die', [91, 92, 93, 94, 95, 96, 97], 6, false);
   },
   getDirectionString: function(angle) {
     if (MathUtil.isDown(angle)) {
