@@ -48,7 +48,7 @@ Client.socket.on("clock-ponq", function(serverStamp) {
     Client.socket.emit("clock-pinq", Client.lastSentTime);
   } else if (!Client.clockSyncFinished) {
     // compute the median client-server clock delta
-    Client.medianClockDelta = quickMedian(Client.clientServerClockDeltas);
+    Client.medianClockDelta = quickMedian(Client.clientServerClockDeltas)[0];
 
     Client.clockSyncFinished = true;
     console.log(`Clock sync finished with median clock delta ${Client.medianClockDelta}`);
