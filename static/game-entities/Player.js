@@ -48,14 +48,17 @@ Player.prototype.addInputEvents = function() {
   }, this);
 };
 Player.prototype.handleInput = function(input) {
-  this.playerStateMachine.peekState().handleInput(input);
+  if (this.alive) this.playerStateMachine.peekState().handleInput(input);
 };
 Player.prototype.update = function() {
   Actor.prototype.update.call(this);
-  this.playerStateMachine.peekState().update(this, this.playerStateMachine);
+  if (this.alive) this.playerStateMachine.peekState().update(this, this.playerStateMachine);
 };
 Player.prototype.kill = function() {
+  console.log("player died");
   Actor.prototype.kill.call(this);
+  this._main.animations.play("die");
+  this.weaponManager.update(0, isVisible = false);
   // keep these flags from resetting, we still want to update a killed player
   this.exists = true;
   this.visible = true;
@@ -551,6 +554,7 @@ var PlayerAnimUtil = {
     player._main.animations.add('idle_down', [46, 47, 48], 4, true);
     player._main.animations.add('idle_up', [29, 30, 31], 4, true);
     player._main.animations.add('fall', [86, 87, 88, 89], 10, false);
+    player._main.animations.add('die', [91, 92, 93, 94, 95, 96, 97], 5, false);
   },
   getDirectionString: function(angle) {
     if (MathUtil.isDown(angle)) {

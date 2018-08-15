@@ -33,6 +33,7 @@ function Player(name, socketId) {
   // character-specific things
   this.weaponName = "DefaultWeapon";
 
+  this.timeToRespawn = 3.0; // secs to respawn after death
   this.lastBulletFiredEvent = null;
   this.lastSpawnEvent = new EntityEvents.PlayerRespawnedEvent(this.id, this.body.x, this.body.y, this.maxHealth);
   // pre-allocate a snapshot
@@ -112,8 +113,12 @@ Player.prototype.takeDamage = function(entityTookDamageEvent) {
     return null;
   }
   this.health = Math.max(0, this.health - entityTookDamageEvent.dmg);
-  this.isAlive = this.health > 0;
+  if (this.health <= 0) this.kill();
   return entityTookDamageEvent;
+};
+Player.prototype.kill = function() {
+  this.timeToRespawn = 3.0; // secs to respawn
+  this.isAlive = false;
 };
 Player.prototype.respawnAt = function(x, y) {
   this.health = this.maxHealth;

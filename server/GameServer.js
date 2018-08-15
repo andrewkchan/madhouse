@@ -174,7 +174,7 @@ GameServer.removePlayerBySocketId = function(socketId) {
 GameServer.update = function() {
   // update physics
   var now = performance.now();
-  var deltaTime = (now - GameServer.lastUpdatedTime) / 1000.0;
+  var deltaTime = (now - GameServer.lastUpdatedTime) / 1000.0; // secs
   // sometimes the update will fire before map is finished reading, so check if world null
   if (GameServer.world) GameServer.world.step(GameServer.UPDATE_TIMESTEP, deltaTime, 10);
   GameServer.lastUpdatedTime = now;
@@ -184,6 +184,8 @@ GameServer.update = function() {
     var player = GameServer.players[key];
     if (player.isAlive) {
       player.update();
+    } else if (player.timeToRespawn > 0.0) {
+      player.timeToRespawn -= deltaTime;
     } else {
       var startingPosition = GameServer.determineStartingPosition();
       var respawnEvent = player.respawnAt(startingPosition.x, startingPosition.y);
