@@ -54,6 +54,12 @@ Player.prototype.update = function() {
   Actor.prototype.update.call(this);
   this.playerStateMachine.peekState().update(this, this.playerStateMachine);
 };
+Player.prototype.kill = function() {
+  Actor.prototype.kill.call(this);
+  // keep these flags from resetting, we still want to update a killed player
+  this.exists = true;
+  this.visible = true;
+};
 Player.prototype.takeDamage = function(dmg) {
   Actor.prototype.takeDamage.call(this, dmg);
   this.flashForSeconds(0.5);
