@@ -52,7 +52,6 @@ Client.socket.on("clock-ponq", function(serverStamp) {
 
     Client.clockSyncFinished = true;
     console.log(`Clock sync finished with median clock delta ${Client.medianClockDelta}`);
-    Client.askNewPlayer();
   }
 });
 

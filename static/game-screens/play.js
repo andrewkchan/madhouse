@@ -142,6 +142,7 @@ var playState = {
 
     // load level
     this.load_map();
+    this.message_new("Loading level...");
   },
 
   createEnemies: function() {
@@ -159,8 +160,7 @@ var playState = {
             game.stage.disableVisibilityChange = true;
         }, this);
     }
-    Client.setupConnection();
-    this.message_new("Setting up connection...");
+    Client.askNewPlayer();
   },
 
   /**

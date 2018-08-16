@@ -37,7 +37,6 @@ io.on("connection", function(socket) {
   });
 
   socket.on("clock-pinq", function(data) {
-    console.log("clock-pinq");
     socket.emit("clock-ponq", +Date.now());
   });
 
