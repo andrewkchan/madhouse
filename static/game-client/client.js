@@ -43,7 +43,7 @@ Client.socket.on("clock-ponq", function(serverStamp) {
   Client.clientServerClockDeltas.push([clientServerClockDelta]);
 
   Client.clockSamples++;
-  if (Client.clockSamples < 15) {
+  if (Client.clockSamples < 10) {
     Client.lastSentTime = +Date.now();
     Client.socket.emit("clock-pinq", Client.lastSentTime);
   } else if (!Client.clockSyncFinished) {

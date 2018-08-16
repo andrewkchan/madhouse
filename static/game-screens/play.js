@@ -160,6 +160,7 @@ var playState = {
         }, this);
     }
     Client.setupConnection();
+    this.message_new("Setting up connection...");
   },
 
   /**
