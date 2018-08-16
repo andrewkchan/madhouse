@@ -320,7 +320,6 @@ var playState = {
 
   onBulletCollision: function(bullet, entity) {
     if (entity instanceof Actor) {
-      if (entity.name === "player") return;
       bullet.collideWith(entity);
     }
     bullet.impact();
