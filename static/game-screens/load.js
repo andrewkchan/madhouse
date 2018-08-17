@@ -20,8 +20,6 @@ var loadState = {
 
     game.load.image( 'tiles', 'images/tiles.png' );
     game.load.image( 'overlay', 'images/overlay.png' );
-    game.load.image( 'intro', 'images/intro.png' );
-    game.load.image( 'logo', 'images/logo.png' );
     game.load.image( 'font', 'images/font.png' );
     game.load.image( 'share', 'images/share-button.png' );
 

@@ -32,6 +32,8 @@ function Player(
     this.body.velocity.y,
     this.peekState().name,
     this.peekState().cursorAngle || 1.0,
+    this.animSet,
+    this.weaponManager.name,
   );
 
   // buffer to store snapshots from the server.
@@ -109,6 +111,7 @@ function PlayerSnapshot(
   velocityY,
   currentStateName,
   cursorAngle,
+  animSet,
   weaponName,
 ) {
   this.x = x;
@@ -119,6 +122,7 @@ function PlayerSnapshot(
   };
   this.currentStateName = currentStateName;
   this.cursorAngle = cursorAngle;
+  this.animSet = animSet;
   this.weaponName = weaponName;
 }
 
@@ -130,6 +134,7 @@ Player.prototype.getSnapshot = function() {
   this.snapshot.velocity.y = this.body ? this.body.velocity.y : 0;
   this.snapshot.currentStateName = this.peekState().name;
   this.snapshot.cursorAngle = this.peekState().cursorAngle || 1.0;
+  this.snapshot.animSet = this.animSet;
   this.snapshot.weaponName = this.weaponManager ? this.weaponManager.name : "NullWeapon";
   return this.snapshot;
 };
@@ -138,6 +143,8 @@ Player.prototype.syncWithSnapshot = function(playerSnapshot) {
   this.x = playerSnapshot.x;
   this.y = playerSnapshot.y;
   this.health = playerSnapshot.health;
+  this.animSet = playerSnapshot.animSet;
+  // TODO sync weapons
   // player state update methods should handle velocity stuff themselves.
 
   if (this.peekState().name !== playerSnapshot.currentStateName) {
@@ -192,6 +199,8 @@ Player.prototype.interpolate = function(renderTimestamp) {
     // apply discrete changes only on snapshot boundaries.
     // e.g. statemachine states, health etc.
     this.health = s0.health;
+    this.animSet = s0.animSet;
+    // TODO apply weapon changes
     if (this.peekState().name !== s0.currentStateName) {
       this.playerStateMachine.popState();
       var nextState = null;

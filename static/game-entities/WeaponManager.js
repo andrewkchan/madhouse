@@ -53,6 +53,15 @@ WeaponManager.prototype.onFire = function(bullet, weapon) {
   }
 };
 
+WeaponManager.constructorFromWeaponName = function(weaponName) {
+  return {
+    "DefaultWeapon": WeaponManager,
+    "Revolver": RevolverManager,
+    "Nailgun": NailgunManager,
+    "DualUzi": DualUziManager,
+  }[weaponName] || WeaponManager;
+};
+
 function LocalBulletFiredEvent(
   x,
   y,

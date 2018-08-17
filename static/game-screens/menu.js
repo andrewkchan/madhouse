@@ -3,12 +3,6 @@
 var menuState = {
   font_set: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,;:?!-_\'#"\\/<>()@',
 
-  checkWasClicked: function(sprite) {
-    if (sprite.input.justPressed()) {
-      this.start(sprite);
-    }
-  },
-
   create: function() {
     this.message = this.game.add.retroFont( 'font', 4, 6, this.font_set, 8, 3, 1, 2, 1 );
     this.message.autoUpperCase = false;
@@ -20,17 +14,17 @@ var menuState = {
     this.andrew.x = 64;
     this.andrew.y = 50;
     this.andrew.inputEnabled = true;
+    this.andrew.events.onInputDown.add(function() { this.start(this.andrew); }, this);
     this.luciano = new Player(null, false, "luciano", RevolverManager);
     this.luciano.x = 128;
     this.luciano.y = 50;
     this.luciano.inputEnabled = true;
+    this.luciano.events.onInputDown.add(function() { this.start(this.luciano); }, this);
     this.brian = new Player(null, false, "brian", NailgunManager);
     this.brian.x = 192;
     this.brian.y = 50;
     this.brian.inputEnabled = true;
-
-    // Start the game when the screen is tapped
-    this.input.onDown.addOnce( this.start, this );
+    this.brian.events.onInputDown.add(function() { this.start(this.brian); }, this);
   },
 
   start: function(sprite) {
@@ -53,8 +47,5 @@ var menuState = {
     this.updateAlpha(this.andrew);
     this.updateAlpha(this.brian);
     this.updateAlpha(this.luciano);
-    this.checkWasClicked(this.andrew);
-    this.checkWasClicked(this.brian);
-    this.checkWasClicked(this.luciano);
   },
 };

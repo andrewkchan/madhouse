@@ -31,7 +31,7 @@ function Player(name, socketId) {
   this.cursorAngle = 0;
 
   // character-specific things
-  this.weaponName = "DefaultWeapon";
+  this.weaponName = "WeaponManager";
   this.animSet = "andrew";
 
   this.timeToRespawn = 3.0; // secs to respawn after death
@@ -60,6 +60,7 @@ function PlayerSnapshot(player) {
   this.currentStateName = player.currentStateName;
   this.cursorAngle = player.cursorAngle;
   this.weaponName = player.weaponName;
+  this.animSet = player.animSet;
   this.health = player.health;
   this.isAlive = player.isAlive;
 }
@@ -73,6 +74,7 @@ Player.prototype.getSnapshot = function() {
   snapshot.currentStateName = this.currentStateName;
   snapshot.cursorAngle = this.cursorAngle;
   snapshot.weaponName = this.weaponName;
+  snapshot.animSet = this.animSet;
   snapshot.health = this.health;
   snapshot.isAlive = this.isAlive;
   return this.snapshot;
@@ -88,6 +90,7 @@ Player.prototype.syncWithSnapshot = function(snapshot) {
   this.currentStateName = snapshot.currentStateName;
   this.cursorAngle = snapshot.cursorAngle;
   this.weaponName = snapshot.weaponName;
+  this.animSet = snapshot.animSet;
 };
 
 Player.prototype.applyLocalBulletFiredEvent = function(data) {
@@ -133,17 +136,21 @@ Player.prototype.respawnAt = function(x, y) {
   this.lastSpawnEvent.health = this.health;
   return this.lastSpawnEvent;
 };
+Player.prototype.applyCharacterPreset = function(preset) {
+  this.animSet = preset.animSet;
+  this.weaponName = preset.weaponName;
+};
 Player.characterPresets = {
   andrew: {
     animSet: "andrew",
-    weaponName: "DualUziManager",
+    weaponName: "DualUzi",
   },
   brian: {
     animSet: "brian",
-    weaponName: "NailgunManager",
+    weaponName: "Nailgun",
   },
   luciano: {
     animSet: "luciano",
-    weaponName: "RevolverManager",
+    weaponName: "Revolver",
   },
 };

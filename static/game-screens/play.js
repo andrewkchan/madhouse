@@ -35,7 +35,9 @@ var playState = {
 
   addNewPlayer: function(id, playerSnapshot) {
     console.log(`Added new player ${id} at position ${playerSnapshot.x}, ${playerSnapshot.y}`);
-    var player = new Player(id);
+    var animSet = playerSnapshot.animSet || "andrew";
+    var weaponManager = WeaponManager.constructorFromWeaponName(playerSnapshot.weaponName);
+    var player = new Player(id, false, animSet, weaponManager);
     this.playerMap[id] = player;
     player.x = playerSnapshot.x;
     player.y = playerSnapshot.y;
@@ -242,7 +244,8 @@ var playState = {
 
   initOwnPlayer: function(data) {
     console.log(`Init own player with id ${data.id}`);
-    this.ownPlayer = new Player(data.id, true);
+    var weaponManager = WeaponManager.constructorFromWeaponName(data.weaponName);
+    this.ownPlayer = new Player(data.id, true, data.animSet, weaponManager);
     this.ownPlayer.addInputEvents();
     this.actorGroup.add( this.ownPlayer );
      // position player

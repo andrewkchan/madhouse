@@ -146,6 +146,12 @@ GameServer.isPlayerIdFree = function(id) {
 
 GameServer.addNewPlayer = function(socket, data) {
   var player = new Player("new player", socket.id);
+  if (data.characterName) {
+    player.applyCharacterPreset(Player.characterPresets[data.characterName]);
+  } else {
+    player.applyCharacterPreset(Player.characterPresets.andrew);
+  }
+
   GameServer.addPlayerId(socket.id, player.id);
   // add player to all relevant data structures
   GameServer.players[player.id] = player;
@@ -155,7 +161,7 @@ GameServer.addNewPlayer = function(socket, data) {
 
   GameServer.server.sendInitializationPacket(
     socket,
-    GameServer.createInitializationPacket(player.id)
+    GameServer.createInitializationPacket(player),
   );
 };
 
@@ -253,9 +259,11 @@ GameServer.handleLocalBulletFired = function(player, data) {
 //======================================================
 // Client initialization stuff
 
-GameServer.createInitializationPacket = function(playerId) {
+GameServer.createInitializationPacket = function(player) {
   return {
-    id: playerId,
+    id: player.id,
+    animSet: player.animSet,
+    weaponName: player.weaponName,
   };
 };
 
