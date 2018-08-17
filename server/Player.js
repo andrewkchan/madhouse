@@ -32,6 +32,7 @@ function Player(name, socketId) {
 
   // character-specific things
   this.weaponName = "DefaultWeapon";
+  this.animSet = "andrew";
 
   this.timeToRespawn = 3.0; // secs to respawn after death
   this.lastBulletFiredEvent = null;
@@ -131,4 +132,18 @@ Player.prototype.respawnAt = function(x, y) {
   this.lastSpawnEvent.y = y;
   this.lastSpawnEvent.health = this.health;
   return this.lastSpawnEvent;
+};
+Player.characterPresets = {
+  andrew: {
+    animSet: "andrew",
+    weaponName: "DualUziManager",
+  },
+  brian: {
+    animSet: "brian",
+    weaponName: "NailgunManager",
+  },
+  luciano: {
+    animSet: "luciano",
+    weaponName: "RevolverManager",
+  },
 };

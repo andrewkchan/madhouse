@@ -1,8 +1,13 @@
-function Player(id, isOwnPlayer = false) {
+function Player(
+  id,
+  isOwnPlayer = false,
+  animSet = "andrew",
+  weaponManagerType = DualUziManager
+) {
   Actor.call(this, id, 'player', 0, 0, 'empty_convict');
   this.isOwnPlayer = isOwnPlayer;
-  this.animSet = "andrew";
-  this.weaponManager = new DualUziManager(this);
+  this.animSet = animSet;
+  this.weaponManager = new weaponManagerType(this);
   this.weaponManager.initBackgroundAnims();
   PlayerAnimUtil.initSpriteWithAnims(this);
   this.weaponManager.initForegroundAnims();

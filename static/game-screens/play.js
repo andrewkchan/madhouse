@@ -150,7 +150,7 @@ var playState = {
     //this.actorGroup.add(slime);
   },
 
-  init: function(data) {
+  init: function(characterName) {
     // If the game loads while the window is out of focus, it may hang; disableVisibilityChange should be set to true
     // only once it's fully loaded
     if (document.hasFocus()) {
@@ -160,7 +160,7 @@ var playState = {
             game.stage.disableVisibilityChange = true;
         }, this);
     }
-    Client.askNewPlayer();
+    Client.askNewPlayer(characterName);
   },
 
   /**
@@ -753,6 +753,7 @@ var playState = {
   },
 
   fall_in_pit: function(sprite, tile) {
+    return; // make this a no-op until we add it to the server
     if (tile.containsPoint(sprite.body.center.x, sprite.body.center.y)) {
       if (sprite === this.ownPlayer) {
         var currentState = this.ownPlayer.playerStateMachine.peekState();

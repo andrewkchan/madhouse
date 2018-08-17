@@ -30,8 +30,8 @@ packets used to synchronize game state over that connection. The flow is as foll
 
 Reference: http://www.mine-control.com/zack/timesync/timesync.html
 */
-Client.askNewPlayer = function() {
-  Client.socket.emit("ask-init");
+Client.askNewPlayer = function(characterName) {
+  Client.socket.emit("ask-init", { characterName: characterName });
 };
 Client.setupConnection = function() {
   Client.lastSentTime = +Date.now();
