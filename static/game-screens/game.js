@@ -9,153 +9,153 @@ var game = new Phaser.Game( 256, 144, Phaser.CANVAS, '', null, false, false );
 // Our 'global' variable
 game.global = {
 
-    // game version (can help with debugging)
-    version: '0.0.1',
+  // game version (can help with debugging)
+  version: '0.0.1',
 
-    // debug enabled?
-    debug: true,
-
-
-    // show advertising banner
-    showBanner: function () {
-
-        "use strict";
-
-        if ( ! game.device.cocoonJS ) {
-            return;
-        }
-
-        CocoonJS.Ad.setBannerLayout( CocoonJS.Ad.BannerLayout.BOTTOM_CENTER );
-        CocoonJS.Ad.showBanner();
-
-        if ( game.rnd.integerInRange( 0, 100 ) > 40 ) {
-            CocoonJS.Ad.showFullScreen();
-        }
-
-    },
+  // debug enabled?
+  debug: true,
 
 
-    // hide advertising banner
-    hideBanner: function () {
+  // show advertising banner
+  showBanner: function () {
 
-        "use strict";
+      "use strict";
 
-        if ( ! game.device.cocoonJS ) {
-            return;
-        }
+      if ( ! game.device.cocoonJS ) {
+          return;
+      }
 
-        CocoonJS.Ad.hideBanner();
+      CocoonJS.Ad.setBannerLayout( CocoonJS.Ad.BannerLayout.BOTTOM_CENTER );
+      CocoonJS.Ad.showBanner();
 
-    },
+      if ( game.rnd.integerInRange( 0, 100 ) > 40 ) {
+          CocoonJS.Ad.showFullScreen();
+      }
 
-
-    // login to gamecenter/ google play
-    login: function () {
-
-        "use strict";
-
-        if ( ! game.device.cocoonJS ) {
-            return;
-        }
-
-        var gc = CocoonJS.Social.GameCenter;
-        var socialService = gc.getSocialInterface();
-
-        if ( socialService ) {
-            socialService.onLoginStatusChanged.addEventListener( function( _loggedIn ) {
-
-                game.global.loggedIn = _loggedIn;
-
-                /**
-                gc.submitAchievements([{identifier: "test_achievement", showsCompletionBanner: true, percentComplete:100}], function(error){
-                    if (error) {
-                        return console.error("Error submittingAchievemnt: " + error);
-                    }
-                })
-                */
-
-            } );
-
-            socialService.login( function( loggedIn, error ) {
-
-                if ( ! loggedIn || error ) {
-
-                    // Tell the user that Game Center is Disabled
-                    if ( error.code === 2 ) {
-
-                        // go to gamecenter app
-                        CocoonJS.App.onMessageBoxConfirmed.addEventListenerOnce( function(){
-                            CocoonJS.App.openURL( 'gamecenter:' );
-                        } );
-
-                        CocoonJS.App.showMessageBox(
-                            'Game Center Not Signed In',
-                            'Please sign into Game Center app to enable leaderboards and achievements',
-                            'OK',
-                            'Later'
-                        );
-
-                    }
-
-                }
-
-            } );
-
-        }
-
-    },
+  },
 
 
-    // link to a web page
-    href: function (path) {
+  // hide advertising banner
+  hideBanner: function () {
 
-        "use strict";
+      "use strict";
 
-        if ( game.device.cocoonJS ) {
-            CocoonJS.App.openURL( path );
-        } else {
-            window.open( path, '_blank' );
-        }
+      if ( ! game.device.cocoonJS ) {
+          return;
+      }
 
-    },
+      CocoonJS.Ad.hideBanner();
 
-
-    // save the personal best to be displayed in the game
-    setBestScore: function () {
-
-        "use strict";
-
-        var score = this.score;
-
-        if ( game.device.localStorage ) {
-            localStorage.setItem( 'top_score', score );
-        }
-
-        social.postScore( score );
-
-    },
+  },
 
 
-    // display the best score you got
-    getBestScore: function () {
+  // login to gamecenter/ google play
+  login: function () {
 
-        "use strict";
+      "use strict";
 
-        var score = 0;
+      if ( ! game.device.cocoonJS ) {
+          return;
+      }
 
-        if ( game.device.localStorage ) {
-            score = localStorage.getItem( 'top_score' );
-        }
+      var gc = CocoonJS.Social.GameCenter;
+      var socialService = gc.getSocialInterface();
 
-        if ( score === null ) {
-            score = 0;
-            this.score = score;
-            this.setBestScore();
-        }
+      if ( socialService ) {
+          socialService.onLoginStatusChanged.addEventListener( function( _loggedIn ) {
 
-        return score;
+              game.global.loggedIn = _loggedIn;
 
-    },
+              /**
+              gc.submitAchievements([{identifier: "test_achievement", showsCompletionBanner: true, percentComplete:100}], function(error){
+                  if (error) {
+                      return console.error("Error submittingAchievemnt: " + error);
+                  }
+              })
+              */
+
+          } );
+
+          socialService.login( function( loggedIn, error ) {
+
+              if ( ! loggedIn || error ) {
+
+                  // Tell the user that Game Center is Disabled
+                  if ( error.code === 2 ) {
+
+                      // go to gamecenter app
+                      CocoonJS.App.onMessageBoxConfirmed.addEventListenerOnce( function(){
+                          CocoonJS.App.openURL( 'gamecenter:' );
+                      } );
+
+                      CocoonJS.App.showMessageBox(
+                          'Game Center Not Signed In',
+                          'Please sign into Game Center app to enable leaderboards and achievements',
+                          'OK',
+                          'Later'
+                      );
+
+                  }
+
+              }
+
+          } );
+
+      }
+
+  },
+
+
+  // link to a web page
+  href: function (path) {
+
+      "use strict";
+
+      if ( game.device.cocoonJS ) {
+          CocoonJS.App.openURL( path );
+      } else {
+          window.open( path, '_blank' );
+      }
+
+  },
+
+
+  // save the personal best to be displayed in the game
+  setBestScore: function () {
+
+      "use strict";
+
+      var score = this.score;
+
+      if ( game.device.localStorage ) {
+          localStorage.setItem( 'top_score', score );
+      }
+
+      social.postScore( score );
+
+  },
+
+
+  // display the best score you got
+  getBestScore: function () {
+
+      "use strict";
+
+      var score = 0;
+
+      if ( game.device.localStorage ) {
+          score = localStorage.getItem( 'top_score' );
+      }
+
+      if ( score === null ) {
+          score = 0;
+          this.score = score;
+          this.setBestScore();
+      }
+
+      return score;
+
+  },
 
 };
 

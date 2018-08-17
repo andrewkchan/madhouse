@@ -1,46 +1,43 @@
 /* global game, Phaser, social */
 
 var bootState = {
+  preload: function () {
+    game.load.image( 'progressBar', 'assets/images/loading.png' );
 
-    preload: function () {
+    this.scale.pageAlignHorizontally = true;
 
-        game.load.image( 'progressBar', 'assets/images/loading.png' );
+    this.scale.pageAlignVertically = true;
 
-        this.scale.pageAlignHorizontally = true;
+    // Make game stretch to fill screen fully
+    game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
 
-        this.scale.pageAlignVertically = true;
+    // update game scale
+    game.scale.refresh();
 
-        // Make game stretch to fill screen fully
-        game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+    // Set a background color and the physic system
+    game.stage.backgroundColor = '#45283c';
 
-        // update game scale
-        game.scale.refresh();
+    game.stage.smoothed = false;
 
-        // Set a background color and the physic system
-        game.stage.backgroundColor = '#45283c';
+    // Add gamecenter leaderboard support
+    social.init( 'leaderboard_1' );
 
-        game.stage.smoothed = false;
+    // Login to gamecenter
+    game.global.login();
 
-        // Add gamecenter leaderboard support
-        social.init( 'leaderboard_1' );
+    //game.context.mozImageSmoothingEnabled = false;
+    //game.context.webkitImageSmoothingEnabled = false;
+    //game.context.msImageSmoothingEnabled = true;
+    //game.context.imageSmoothingEnabled = false;
 
-        // Login to gamecenter
-        game.global.login();
+    console.log( game.context );
+  },
 
-        //game.context.mozImageSmoothingEnabled = false;
-        //game.context.webkitImageSmoothingEnabled = false;
-        //game.context.msImageSmoothingEnabled = true;
-        //game.context.imageSmoothingEnabled = false;
-
-        console.log( game.context );
-
-    },
-
-    create: function() {
-
-        // switch to the loading state
-        game.state.start( 'load' );
-
-    }
-
+  create: function() {
+    game.canvas.oncontextmenu = function (e) {
+      e.preventDefault();
+    };
+    // switch to the loading state
+    game.state.start( 'load' );
+  }
 };
