@@ -11,6 +11,8 @@ function EntityTookDamageEvent(entityId, attackerId, dmg, dmgType) {
   this.entityId = entityId; // id of entity that took damage
   this.attackerId = attackerId; // id of attacking entity (or null)
   this.dmg = dmg; // int amount of damage
+
+  dmgType = (dmgType in EntityTookDamageEvent.EnumDamageTypes) ? dmgType : EntityTookDamageEvent.DEFAULT;
   this.dmgType = dmgType; // string type of damage
 }
 
