@@ -13,8 +13,8 @@ app.get('/',function(req,res){
   res.sendFile(__dirname+'/index.html');
 });
 
-server.listen(process.env.PORT || 8081,function(){
-  console.log('Listening on '+server.address().port);
+server.listen(process.env.PORT || 8081, function(){
+  console.log('Listening on '+ server.address().address + ":" + server.address().port);
   server.CLIENT_UPDATE_RATE = 1000/20.0; // rate at which update packets are sent
   GameServer.readMap();
   server.setUpdateLoop();
