@@ -36,7 +36,7 @@ KatanaManager.prototype.initForegroundAnims = function() {
 KatanaManager.prototype.initBackgroundAnims = function() {
   var player = this.player;
 
-  player._wave = player.addChild(game.make.sprite(3, 14, 'katana_wave'));
+  player._wave = player.addChild(game.make.sprite(3, 10, 'katana_wave'));
   player._wave.anchor.setTo(0, 1);
   player._wave.animations.add('wave', [0, 1], 10);
   player._wave.visible = false;
@@ -117,21 +117,24 @@ KatanaManager.prototype.update = function(angle, isVisible = true) {
   }
 };
 KatanaManager.prototype.fire = function(input) {
-  var player = this.player;
-  var angle = GameInputUtil.getCursorAngle(input);
+  if (this.swingTime <= 0) {
+    // play the animation
+    var player = this.player;
+    var angle = GameInputUtil.getCursorAngle(input);
 
-  var visibleHand = null;
-  if (MathUtil.isDown(angle)) {
-    visibleHand = player._weaponHandD;
-  } else if (MathUtil.isRight(angle)) {
-    visibleHand = player._weaponHandR;
-  } else if (MathUtil.isUp(angle)) {
-    visibleHand = player._weaponHandU;
-  } else {
-    visibleHand = player._weaponHandL;
+    var visibleHand = null;
+    if (MathUtil.isDown(angle)) {
+      visibleHand = player._weaponHandD;
+    } else if (MathUtil.isRight(angle)) {
+      visibleHand = player._weaponHandR;
+    } else if (MathUtil.isUp(angle)) {
+      visibleHand = player._weaponHandU;
+    } else {
+      visibleHand = player._weaponHandL;
+    }
+    visibleHand._attackTween.start();
+    this.swingTime = SWING_TIME;
+    player._wave.rotation = angle;
+    player._wave.animations.play('wave');
   }
-  visibleHand._attackTween.start();
-  this.swingTime = SWING_TIME;
-  player._wave.rotation = angle;
-  player._wave.animations.play('wave');
 };
