@@ -25,12 +25,10 @@ var bootState = {
     // Login to gamecenter
     game.global.login();
 
-    //game.context.mozImageSmoothingEnabled = false;
-    //game.context.webkitImageSmoothingEnabled = false;
-    //game.context.msImageSmoothingEnabled = true;
-    //game.context.imageSmoothingEnabled = false;
-
-    console.log( game.context );
+    game.context.mozImageSmoothingEnabled = false;
+    game.context.webkitImageSmoothingEnabled = false;
+    game.context.msImageSmoothingEnabled = true;
+    game.context.imageSmoothingEnabled = false;
   },
 
   create: function() {

@@ -151,6 +151,6 @@ Player.characterPresets = {
   },
   luciano: {
     animSet: "luciano",
-    weaponName: "Revolver",
+    weaponName: "Katana",
   },
 };

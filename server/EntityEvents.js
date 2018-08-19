@@ -21,6 +21,7 @@ EntityTookDamageEvent.EnumDamageTypes = {
   REVOLVER: "REVOLVER",
   NAILGUN: "NAILGUN",
   UZI: "UZI",
+  KATANA: "KATANA",
 };
 
 // make a pool to reuse useful events

@@ -29,6 +29,15 @@ var loadState = {
     game.load.spritesheet( 'brian', 'images/brian.png', 26, 32, 100, 0, 0 );
     game.load.spritesheet( 'andrew', 'images/andrew.png', 26, 32, 100, 0, 0 );
     game.load.spritesheet( 'tilemap', 'images/tiles.png', 8, 8 );
+    game.load.image('katana', 'images/katana.png');
+    game.load.image('katana_swoosh', 'images/katana_swoosh.png');
+    game.load.image('katana_swoosh_flipped', 'images/katana_swoosh_flipped.png');
+    game.load.spritesheet('katana_wave', 'images/katana_swoosh_wave.png', 32, 32);
+    game.load.image('katana_flipped', 'images/katana_flipped.png');
+    game.load.image('katana_swing_r0', 'images/katana_swing_r0.png');
+    game.load.image('katana_swing_r0o', 'images/katana_swing_r0o.png');
+    game.load.image('katana_swing_r1', 'images/katana_swing_r1.png');
+    game.load.image('katana_swing_r1o', 'images/katana_swing_r1o.png');
     game.load.image('uzi', 'images/uzi.png');
     game.load.image('uzi_flipped', 'images/uzi_flipped.png');
     game.load.image('nailgun', 'images/nailgun.png');

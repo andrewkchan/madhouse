@@ -45,7 +45,9 @@ Player.prototype.constructor = Player;
 
 Player.prototype.addInputEvents = function() {
   game.input.onDown.add(function() {
-    this.peekState().onFire(this, game.input);
+    if (this.alive) {
+      this.peekState().onFire(this, game.input);
+    }
   }, this);
   game.input.onUp.add(function() {
     var s = this.peekState();

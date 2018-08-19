@@ -59,6 +59,7 @@ WeaponManager.constructorFromWeaponName = function(weaponName) {
     "Revolver": RevolverManager,
     "Nailgun": NailgunManager,
     "DualUzi": DualUziManager,
+    "Katana": KatanaManager,
   }[weaponName] || WeaponManager;
 };
 

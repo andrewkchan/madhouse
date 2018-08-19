@@ -15,7 +15,7 @@ var menuState = {
     this.andrew.y = 50;
     this.andrew.inputEnabled = true;
     this.andrew.events.onInputDown.add(function() { this.start(this.andrew); }, this);
-    this.luciano = new Player(null, false, "luciano", RevolverManager);
+    this.luciano = new Player(null, false, "luciano", KatanaManager);
     this.luciano.x = 128;
     this.luciano.y = 50;
     this.luciano.inputEnabled = true;
