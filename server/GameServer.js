@@ -270,7 +270,14 @@ GameServer.handleLocalKatanaAttack = function(player, data) {
   // Actors are damaged acc. to entityTookDamageEvent with damage amt. 1.
   if (player) {
     player.applyLocalKatanaAttackEvent(data);
+
+    // return a serverKatanaAttack event
+    return {
+      angle: data.angle,
+      shooterId: player.id,
+    };
   }
+  return null;
 };
 
 //======================================================

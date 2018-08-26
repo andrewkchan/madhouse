@@ -124,27 +124,30 @@ KatanaManager.prototype.fire = function(input) {
   // can the player fire?
   if (this.swingTime <= 0) {
     // play the animation
-    var player = this.player;
     var angle = GameInputUtil.getCursorAngle(input);
-
-    var visibleHand = null;
-    if (MathUtil.isDown(angle)) {
-      visibleHand = player._weaponHandD;
-    } else if (MathUtil.isRight(angle)) {
-      visibleHand = player._weaponHandR;
-    } else if (MathUtil.isUp(angle)) {
-      visibleHand = player._weaponHandU;
-    } else {
-      visibleHand = player._weaponHandL;
-    }
-    visibleHand._attackTween.start();
-    this.swingTime = SWING_TIME;
-    player._wave.rotation = angle;
-    player._wave.animations.play('wave');
+    this.playFireAnim(angle);
 
     // send `localKatanaAttack` event to server with assoc. angle
     Client.socket.emit("localKatanaAttack", {
       angle: angle,
     });
   }
+};
+KatanaManager.prototype.playFireAnim = function(angle) {
+  var player = this.player;
+
+  var visibleHand = null;
+  if (MathUtil.isDown(angle)) {
+    visibleHand = player._weaponHandD;
+  } else if (MathUtil.isRight(angle)) {
+    visibleHand = player._weaponHandR;
+  } else if (MathUtil.isUp(angle)) {
+    visibleHand = player._weaponHandU;
+  } else {
+    visibleHand = player._weaponHandL;
+  }
+  visibleHand._attackTween.start();
+  this.swingTime = SWING_TIME;
+  player._wave.rotation = angle;
+  player._wave.animations.play('wave');
 };

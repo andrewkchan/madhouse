@@ -263,6 +263,9 @@ var playState = {
     }
   },
 
+  //================================================
+  // Server events
+
   onEntityTookDamage: function(data) {
     if (data.entityId in this.playerMap) {
       // entity is a player
@@ -295,6 +298,17 @@ var playState = {
       shooter.applyServerBulletDestroyedEvent(data);
     }
   },
+
+  onServerKatanaAttack: function(data) {
+    var shooter = this.playerMap[data.shooterId];
+    if (shooter && shooter.weaponManager.name === "Katana") {
+      shooter.weaponManager.playFireAnim(data.angle);
+      console.log("Play fire anim");
+    }
+  },
+
+  //====================================================
+  // Server regular update
 
   processServerUpdate: function(updatePacket) {
     var self = this;

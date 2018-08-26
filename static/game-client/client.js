@@ -88,6 +88,9 @@ Client.socket.on("serverBulletFired", function(data) {
 Client.socket.on("serverBulletDestroyed", function(data) {
   playState.onServerBulletDestroyed(data);
 });
+Client.socket.on("serverKatanaAttack", function(data) {
+  playState.onServerKatanaAttack(data);
+});
 
 //==================
 // Client obj utils

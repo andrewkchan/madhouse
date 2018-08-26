@@ -70,7 +70,8 @@ io.on("connection", function(socket) {
   socket.on("localKatanaAttack", function(data) {
     var player = GameServer.getPlayerBySocketId(socket.id);
     if (player) {
-      GameServer.handleLocalKatanaAttack(player, data);
+      var serverKatanaAttackEvent = GameServer.handleLocalKatanaAttack(player, data);
+      socket.broadcast.emit("serverKatanaAttack", serverKatanaAttackEvent);
     }
   });
 });
