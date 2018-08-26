@@ -37,7 +37,7 @@ ServerBullet.prototype.collideWith = function(entity) {
     if (entity.constructor.name === "Player" && entity.isAlive) {
       var e = EntityEvents.EntityTookDamageEvent.fromBullet(this, entity);
       e = entity.takeDamage(e);
-      GameServer.server.broadcastEntityTookDamage(e);
+      if (e) GameServer.server.broadcastEntityTookDamage(e);
     }
     this.impact();
   }

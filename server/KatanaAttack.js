@@ -21,7 +21,9 @@ function KatanaAttack(angle, shooter) {
   // configure collision of body, etc.
   var collisionGroup = Group.BULLETS;
   var collisionMask = Group.ACTORS | Group.BULLETS | Group.TILES;
-  this.body.addTriangle(30, angle, collisionGroup, collisionMask);
+  this.body.addTriangle(40, angle, collisionGroup, collisionMask);
+
+  this.tickLifetime = 3;
 }
 
 KatanaAttack.prototype = Object.create(MovingEntity.prototype);
@@ -43,7 +45,12 @@ KatanaAttack.prototype.collideWith = function(entity) {
 KatanaAttack.prototype.update = function() {
   this.body.x = this.shooter.body.x;
   this.body.y = this.shooter.body.y;
-  this.impact();
+  if (this.tickLifetime > 0) {
+    this.tickLifetime--;
+  } else {
+    this.impact();
+  }
+
 };
 
 
