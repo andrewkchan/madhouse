@@ -269,9 +269,11 @@ var playState = {
   onEntityTookDamage: function(data) {
     if (data.entityId in this.playerMap) {
       // entity is a player
-      this.playerMap[data.entityId].takeDamage(data.dmg);
+      var player = this.playerMap[data.entityId]
+      if (data.stamp > player.lastDeathTime) player.takeDamage(data.dmg);
     } else if (data.entityId === this.ownPlayer.id) {
-      this.ownPlayer.takeDamage(data.dmg);
+      var player = this.ownPlayer
+      if (data.stamp > player.lastDeathTime) player.takeDamage(data.dmg);
     }
   },
 

@@ -148,6 +148,6 @@ KatanaManager.prototype.playFireAnim = function(angle) {
   }
   visibleHand._attackTween.start();
   this.swingTime = SWING_TIME;
-  player._wave.rotation = angle;
+  player._wave.rotation = angle + Math.PI/4;
   player._wave.animations.play('wave');
 };

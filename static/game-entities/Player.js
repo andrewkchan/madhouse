@@ -23,6 +23,8 @@ function Player(
   this.playerStateMachine = StateMachineUtil.createStateMachine(this);
   this.playerStateMachine.pushState(PlayerStateFactory.IDLE());
 
+  this.lastDeathTime = 0;
+
   // own player's own authoritative snapshot.
   // to be used by own players only!
   this.snapshot = new PlayerSnapshot(
@@ -71,6 +73,8 @@ Player.prototype.kill = function() {
   // keep these flags from resetting, we still want to update a killed player
   this.exists = true;
   this.visible = true;
+
+  this.lastDeathTime = +Date.now();
 };
 Player.prototype.takeDamage = function(dmg) {
   Actor.prototype.takeDamage.call(this, dmg);
