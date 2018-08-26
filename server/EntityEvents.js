@@ -43,9 +43,21 @@ EntityTookDamageEvent.prototype.returnToPool = function() {
 EntityTookDamageEvent.fromBullet = function(bullet, targetEntity) {
   var e = null;
   if (bullet.bulletType in EntityTookDamageEvent._eventPool) {
-    e = EntityTookDamageEvent._eventPool[bullet.bulletType].pop();
+    e = EntityTookDamageEvent._eventPool[bullet.bulletType].pop()
+      || new EntityTookDamageEvent(targetEntity.id, bullet.shooterId, 1, bullet.bulletType);
   } else {
     e = new EntityTookDamageEvent(targetEntity.id, bullet.shooterId, 1, bullet.bulletType);
+  }
+  return e;
+};
+EntityTookDamageEvent.fromKatanaAttack = function(katanaAttack, targetEntity) {
+  var e = null;
+  var dmgType = EntityTookDamageEvent.EnumDamageTypes.KATANA;
+  if (dmgType in EntityTookDamageEvent._eventPool) {
+    e = EntityTookDamageEvent._eventPool[dmgType].pop()
+      || new EntityTookDamageEvent(targetEntity.id, katanaAttack.shooterId, 1, dmgType);
+  } else {
+    e = new EntityTookDamageEvent(targetEntity.id, katanaAttack.shooterId, 1, dmgType);
   }
   return e;
 };

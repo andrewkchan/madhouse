@@ -5,6 +5,7 @@ var GameServer = require("./GameServer");
 var Group = require("./CollisionGroup");
 var ServerBullet = require("./ServerBullet");
 var ServerBulletEvents = require("./ServerBulletEvents");
+var KatanaAttack = require("./KatanaAttack");
 var EntityEvents = require("./EntityEvents");
 var util = require("./util");
 
@@ -31,7 +32,7 @@ function Player(name, socketId) {
   this.cursorAngle = 0;
 
   // character-specific things
-  this.weaponName = "WeaponManager";
+  this.weaponName = "DefaultWeapon";
   this.animSet = "andrew";
 
   this.timeToRespawn = 3.0; // secs to respawn after death
@@ -107,6 +108,10 @@ Player.prototype.applyLocalBulletFiredEvent = function(data) {
     );
   }
   this.lastBulletFiredEvent.syncWithBullet(bullet);
+};
+Player.prototype.applyLocalKatanaAttackEvent = function(data) {
+  var katanaAttack = new KatanaAttack(data.angle, this);
+  this.bulletMap[-1] = katanaAttack;
 };
 
 // receive an EntityTookDamageEvent and modify it as necessary.

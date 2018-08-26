@@ -66,6 +66,13 @@ io.on("connection", function(socket) {
       if (serverBulletFiredEvent) socket.broadcast.emit("serverBulletFired", serverBulletFiredEvent);
     }
   });
+
+  socket.on("localKatanaAttack", function(data) {
+    var player = GameServer.getPlayerBySocketId(socket.id);
+    if (player) {
+      GameServer.handleLocalKatanaAttack(player, data);
+    }
+  });
 });
 
 server.addStamp = function(pkg) {

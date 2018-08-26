@@ -69,5 +69,28 @@ Body.prototype.addBox = function(
   // OTOH phaser sprite x,y are the top-left corner.
   this.addShape(bodyRect, [util.pxToP2(offsetX), util.pxToP2(offsetY)]);
 };
+// add an equilateral triangle wih top vertex at the given offset with given width and bisecting line at the given angle.
+// For example, if the angle is -PI radians and the offset is 0,0, the triangle will have top vertex at the body's position
+// and the rest of the triangle will be below the vertex, centered around the y-axis.
+Body.prototype.addTriangle = function(
+  width, // in px
+  angle, // in radians
+  collisionGroup,
+  collisionMask,
+  offsetX = 0, // in px
+  offsetY = 0, // in px
+) {
+  // vertices of a p2 convex are given in CCW direction
+  var vertices = [
+    [util.pxToP2(offsetX + width*Math.cos(Math.PI/6 + angle)), util.pxToP2(offsetY + width*Math.sin(Math.PI/6 + angle))],
+    [util.pxToP2(offsetX), util.pxToP2(offsetY)],
+    [util.pxToP2(offsetX + width*Math.cos(-Math.PI/6 + angle)), util.pxToP2(offsetY + width*Math.sin(-Math.PI/6 + angle))],
+  ];
+
+  var bodyTriangle = new p2.Convex({ vertices: vertices });
+  bodyTriangle.collisionMask = collisionMask;
+  bodyTriangle.collisionGroup = collisionGroup;
+  this.addShape(bodyTriangle);
+};
 
 module.exports = Body;

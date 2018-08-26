@@ -3,8 +3,6 @@ var Group = require("./CollisionGroup");
 var ServerBulletEvents = require("./ServerBulletEvents");
 var EntityEvents = require("./EntityEvents");
 var GameServer = require("./GameServer");
-var util = require("./util");
-var p2 = require("p2");
 
 function ServerBullet(bulletType, shooterId, localBulletId, x, y) {
   MovingEntity.call(this);

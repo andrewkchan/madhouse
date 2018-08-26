@@ -62,9 +62,9 @@ KatanaManager.prototype.initBackgroundAnims = function() {
     hand._hand.anchor.setTo(0.5, 0.5);
     if (flipped) {
       hand._attackTween =
-        game.add.tween(hand).to({ rotation: '-3.1415926' }, 20, Phaser.Easing.Linear.None);
+        game.add.tween(hand).to({ rotation: '+3.1415926' }, 20, Phaser.Easing.Linear.None);
       hand._attackTween.chain(
-        game.add.tween(hand).to({ rotation: '+3.1415926' }, 150, Phaser.Easing.Quadratic.In)
+        game.add.tween(hand).to({ rotation: '-3.1415926' }, 150, Phaser.Easing.Quadratic.In)
       );
     } else {
       hand._attackTween =
@@ -117,6 +117,11 @@ KatanaManager.prototype.update = function(angle, isVisible = true) {
   }
 };
 KatanaManager.prototype.fire = function(input) {
+  // NOTE: The super class WeaponManager by default would call ::onFire(_weapon) here, which sends a message
+  // to the server. However, since we don't call the superclass's method, we will send a message to the server
+  // right here instead.
+
+  // can the player fire?
   if (this.swingTime <= 0) {
     // play the animation
     var player = this.player;
@@ -136,5 +141,10 @@ KatanaManager.prototype.fire = function(input) {
     this.swingTime = SWING_TIME;
     player._wave.rotation = angle;
     player._wave.animations.play('wave');
+
+    // send `localKatanaAttack` event to server with assoc. angle
+    Client.socket.emit("localKatanaAttack", {
+      angle: angle,
+    });
   }
 };

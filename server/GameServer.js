@@ -188,6 +188,7 @@ GameServer.update = function() {
   // update entity logic
   Object.keys(GameServer.players).forEach(function(key) {
     var player = GameServer.players[key];
+    // update player
     if (player.isAlive) {
       player.update();
     } else if (player.timeToRespawn > 0.0) {
@@ -197,6 +198,11 @@ GameServer.update = function() {
       var respawnEvent = player.respawnAt(startingPosition.x, startingPosition.y);
       GameServer.server.broadcastPlayerRespawnedEvent(respawnEvent);
     }
+    // update associated objects
+    Object.keys(player.bulletMap).forEach(function(localBulletId) {
+      var bullet = player.bulletMap[localBulletId];
+      bullet.update();
+    });
   });
 
   // clean up entities marked for deletion
@@ -254,6 +260,17 @@ GameServer.handleLocalBulletFired = function(player, data) {
     return serverBulletFiredEvent;
   }
   return null;
+};
+
+GameServer.handleLocalKatanaAttack = function(player, data) {
+  // 1. Create a triangle body at the given angle.
+  // the triangle has a lifetime of 1 server update.
+  // 2. Bullets, actors can collide with the triangle body.
+  // Bullets are destroyed immediately.
+  // Actors are damaged acc. to entityTookDamageEvent with damage amt. 1.
+  if (player) {
+    player.applyLocalKatanaAttackEvent(data);
+  }
 };
 
 //======================================================
