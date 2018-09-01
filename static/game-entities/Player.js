@@ -592,6 +592,7 @@ var PlayerAnimUtil = {
 var PlayerBodyUtil = {
   initSpriteWithBody: function(game, sprite) {
     game.physics.arcade.enable(sprite);
+    sprite.body.collideWorldBounds = true;
     sprite.body.setSize( 8, 12, 9, 19 );
     sprite.body.tilePadding.set( 12, 12 );
   },

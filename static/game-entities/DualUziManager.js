@@ -28,7 +28,7 @@ DualUziManager.prototype.destroy = function() {
 DualUziManager.prototype.initForegroundAnims = function() {
   var player = this.player;
   // player weapon hands and weapon
-  player._weaponHandR = player.addChild(game.make.sprite(7, 9, 'empty_convict_hand'));
+  player._weaponHandR = player.addChild(game.make.sprite(8, 9, 'empty_convict_hand'));
   player._weaponHandR.anchor.setTo(0.5, 0.5);
   player._weaponHandR._recoilTween =
     game.add.tween(player._weaponHandR).to({ x: 4 }, 20, Phaser.Easing.Linear.None);
@@ -40,7 +40,7 @@ DualUziManager.prototype.initForegroundAnims = function() {
   player._weaponHandR._hand = player._weaponHandR.addChild(game.make.sprite(0, 0, 'convict_hand'));
   player._weaponHandR._hand.anchor.setTo(0.5, 0.5);
 
-  player._weaponHandR2 = player.addChild(game.make.sprite(-2, 9, 'empty_convict_hand'));
+  player._weaponHandR2 = player.addChild(game.make.sprite(-1, 9, 'empty_convict_hand'));
   player._weaponHandR2.anchor.setTo(0.5, 0.5);
   player._weaponHandR2._recoilTween =
     game.add.tween(player._weaponHandR2).to({ x: -5 }, 20, Phaser.Easing.Linear.None);

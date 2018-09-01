@@ -62,7 +62,6 @@ var playState = {
     this.groupLevel = this.add.group();
     this.groupDrinks = this.add.group();
     this.groupKeys = this.add.group();
-    this.groupDoors = this.add.group();
     this.groupScrolls = this.add.group();
     this.groupMilk = this.add.group();
     this.actorGroup = this.add.group();
@@ -110,15 +109,6 @@ var playState = {
     this.timerEvent = this.timer.add( this.time_limit, this.timer_end, this );
     this.timer.start();
 
-    this.health_overlay = this.game.add.sprite(this.width - 21, this.height + 64 - 7, 'overlay');
-    this.health_overlay.alpha = 0.8;
-    this.health_overlay.anchor.setTo(0, 1);
-    this.groupHud.add(this.health_overlay);
-    this.health_text = this.game.add.retroFont('font', 4, 6, this.font_set, 8, 3, 1, 2, 0);
-    this.health_image = this.game.add.image(this.width, this.height - 7, this.health_text);
-    this.health_image.anchor.setTo(1, 0);
-    this.health_text.text = "100";
-    this.groupHud.add(this.health_image);
 
     // setup game overlay
     this.overlay = this.game.add.sprite( 0, 0, 'overlay' );
@@ -183,7 +173,6 @@ var playState = {
     }
 
     game.physics.arcade.collide(this.actorGroup, this.layer);
-    game.physics.arcade.collide(this.ownPlayer, this.groupDoors);
 
     game.physics.arcade.collide(
       this.ownPlayer,
@@ -212,7 +201,6 @@ var playState = {
       );
     }
 
-    game.physics.arcade.overlap( this.ownPlayer, this.groupKeys, this.key_take, null, this );
     game.physics.arcade.overlap( this.ownPlayer, this.groupMilk, this.milk_take, null, this );
     game.physics.arcade.overlap( this.ownPlayer, this.groupDrinks, this.drink_take, null, this );
     game.physics.arcade.overlap( this.ownPlayer, this.groupScrolls, this.scroll_display, null, this );
@@ -220,8 +208,7 @@ var playState = {
     this.scroll_update();
     this.timer_update();
     this.game_update();
-
-    this.health_text.text = String(this.ownPlayer.health);
+    this.ownPlayerHealthWidget.displayHealth(this.ownPlayer.health);
   },
 
   //========================================================
@@ -248,6 +235,10 @@ var playState = {
     this.ownPlayer = new Player(data.id, true, data.animSet, weaponManager);
     this.ownPlayer.addInputEvents();
     this.actorGroup.add( this.ownPlayer );
+
+    this.ownPlayerHealthWidget = new PlayerHealthWidget(this.groupHud, 3, 3, this.ownPlayer.maxHealth);
+    this.ownPlayerWeaponWidget = new WeaponWidget(this.groupHud, game.width - 30, game.height - 20, 'uzi');
+
      // position player
     var player_position = this.findObjectsByType( 'start', this.map, 'objects' );
     if ( player_position[0] ) {
@@ -459,52 +450,6 @@ var playState = {
     this.display_scroll = false;
   },
 
-
-  /**
-   * Pick up a key
-   *
-   * @param {[[Type]]} player [[Description]]
-   * @param {object}   key    [[Description]]
-   */
-  key_take: function( player, key ) {
-    this.door_open( key );
-    key.kill();
-  },
-
-
-  /**
-   * Open a door with a key
-   *
-   * @param {[[Type]]} id [[Description]]
-   */
-  door_open: function( key ) {
-    // leave if the key does not have an id set
-    if ( typeof key.key_id == 'undefined' ) {
-      return;
-    }
-    // open door
-    var id = key.key_id;
-    // loop through all doors and remove any that match the id of the key
-    this.groupDoors.forEach(
-      function( d ) {
-        if ( d.key_id == id ) {
-            var t = game.add.tween( d.scale ).to( { x: 0, y: 0 }, 300 ).start();
-            t.onComplete.add( function() { this.kill(); }, d );
-        }
-      },
-      this
-    );
-
-    // update message
-
-    // leave if the key does not have a message set
-    if ( typeof key.key_message == 'undefined' ) {
-        return;
-    }
-    this.message_new( key.key_message );
-  },
-
-
   /**
    * The player picks up a milk bottle
    *
@@ -522,8 +467,6 @@ var playState = {
     this.milk_found ++;
 
     this.message_new( this.milk_found + ' of ' + this.milk_required + ' milk' );
-
-    this.key_take( player, milk );
 
     if ( this.milk_found >= this.milk_required ) {
       this.milk_collected();
@@ -644,10 +587,8 @@ var playState = {
     // 63 - milk
     // 64 - start
 
-    //this.map.createFromObjects( name,   gid, key,   frame, exists, autoCull, group, CustomClass, adjustY )
     this.map.createFromObjects( 'objects', 58, 'tilemap', 57, true, false, this.groupDrinks );
     this.map.createFromObjects( 'objects', 60, 'tilemap', 59, true, false, this.groupKeys );
-    this.map.createFromObjects( 'objects', 61, 'tilemap', 60, true, false, this.groupDoors );
     this.map.createFromObjects( 'objects', 62, 'tilemap', 61, true, false, this.groupScrolls );
     this.map.createFromObjects( 'objects', 63, 'tilemap', 62, true, false, this.groupMilk );
 
@@ -698,17 +639,6 @@ var playState = {
       this
     );
 
-    // add doors
-    this.groupDoors.forEach(
-      function( d ) {
-        game.physics.arcade.enable( d );
-        d.body.immovable = true;
-        d.anchor.setTo( 0.5, 0.5 );
-        d.x += d.width / 2;
-        d.y += d.height / 2;
-      },
-      this
-    );
   },
 
   /**
