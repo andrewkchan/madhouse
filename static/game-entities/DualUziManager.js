@@ -10,6 +10,7 @@ function DualUziManager(player) {
   this.player._weapon.bulletAngleVariance = 10; // degrees of shot spread
 
   this.dualWieldToggle = true;
+  this.activeFlash = null;
 }
 
 DualUziManager.prototype = Object.create(WeaponManager.prototype);
@@ -25,111 +26,74 @@ DualUziManager.prototype.destroy = function() {
   this.player._weaponHandL2.destroy();
   this.player._weaponHandR2.destroy();
 };
+DualUziManager.prototype.makeHand = function(offsetX, offsetY, direction, flipped=false) {
+  var player = this.player;
+  // direction string is 'L', 'R', 'U', or 'D'.
+  var hand = player.addChild(game.make.sprite(offsetX, offsetY, 'empty_convict_hand'));
+  hand.anchor.setTo(0.5, 0.5);
+  hand.pivot.x = -1;
+  hand.pivot.y = 1;
+  var gunSprite = flipped ? 'uzi_flipped' : 'uzi';
+  hand._gun = hand.addChild(game.make.sprite(0, 0, gunSprite));
+  var anchorY = flipped ? 0.55 : 0.45;
+  hand._gun.anchor.set(0.35, anchorY);
+  var flashOffsetY = flipped ? 0 : -anchorY*11;
+  hand._gun._flash = hand._gun.addChild(game.make.sprite(10, flashOffsetY, 'muzzle_flash_sm'));
+  hand._gun._flash.blendMode = PIXI.blendModes.SCREEN;
+  hand._gun._flash.kill();
+
+  hand._hand = hand.addChild(game.make.sprite(0, 0, 'convict_hand'));
+  hand._hand.anchor.setTo(0.5, 0.5);
+
+  var tweenStart = null;
+  var tweenEnd = null;
+  switch (direction) {
+    case 'L': {
+      tweenStart = { x: '+3' };
+      tweenEnd = { x: '-3' };
+      break;
+    }
+    case 'R': {
+      tweenStart = { x: '-3' };
+      tweenEnd = { x: '+3' };
+      break;
+    }
+    case 'U': {
+      tweenStart = { y: '+4' };
+      tweenEnd = { y: '-4' };
+    }
+    case 'D': {
+      tweenStart = { y: '-4' };
+      tweenEnd = { y: '+4' };
+    }
+  }
+  hand._recoilTween =
+    game.add.tween(hand).to(tweenStart, 20, Phaser.Easing.Linear.None);
+  hand._recoilTween.chain(
+    game.add.tween(hand).to(tweenEnd, 50, Phaser.Easing.Linear.None)
+  );
+  return hand;
+};
 DualUziManager.prototype.initForegroundAnims = function() {
   var player = this.player;
   // player weapon hands and weapon
-  player._weaponHandR = player.addChild(game.make.sprite(8, 9, 'empty_convict_hand'));
-  player._weaponHandR.anchor.setTo(0.5, 0.5);
-  player._weaponHandR._recoilTween =
-    game.add.tween(player._weaponHandR).to({ x: 4 }, 20, Phaser.Easing.Linear.None);
-  player._weaponHandR._recoilTween.chain(
-    game.add.tween(player._weaponHandR).to({ x: 7 }, 50, Phaser.Easing.Linear.None)
-  );
-  player._weaponHandR._gun = player._weaponHandR.addChild(game.make.sprite(0, 0, 'uzi'));
-  player._weaponHandR._gun.anchor.set(0.35, 0.45);
-  player._weaponHandR._hand = player._weaponHandR.addChild(game.make.sprite(0, 0, 'convict_hand'));
-  player._weaponHandR._hand.anchor.setTo(0.5, 0.5);
+  player._weaponHandR = this.makeHand(8, 9, 'R');
+  player._weaponHandR2 = this.makeHand(-1, 9, 'R');
 
-  player._weaponHandR2 = player.addChild(game.make.sprite(-1, 9, 'empty_convict_hand'));
-  player._weaponHandR2.anchor.setTo(0.5, 0.5);
-  player._weaponHandR2._recoilTween =
-    game.add.tween(player._weaponHandR2).to({ x: -5 }, 20, Phaser.Easing.Linear.None);
-  player._weaponHandR2._recoilTween.chain(
-    game.add.tween(player._weaponHandR2).to({ x: -2 }, 50, Phaser.Easing.Linear.None)
-  );
-  player._weaponHandR2._gun = player._weaponHandR2.addChild(game.make.sprite(0, 0, 'uzi'));
-  player._weaponHandR2._gun.anchor.set(0.35, 0.45);
-  player._weaponHandR2._hand = player._weaponHandR2.addChild(game.make.sprite(0, 0, 'convict_hand'));
-  player._weaponHandR2._hand.anchor.setTo(0.5, 0.5);
+  player._weaponHandL = this.makeHand(-6, 9, 'L', true);
+  player._weaponHandL2 = this.makeHand(2, 9, 'L', true);
 
-  player._weaponHandL = player.addChild(game.make.sprite(-6, 9, 'empty_convict_hand'));
-  player._weaponHandL.anchor.setTo(0.5, 0.5);
-  player._weaponHandL._recoilTween =
-    game.add.tween(player._weaponHandL).to({ x: -3 }, 20, Phaser.Easing.Linear.None);
-  player._weaponHandL._recoilTween.chain(
-    game.add.tween(player._weaponHandL).to({ x: -6 }, 50, Phaser.Easing.Linear.None)
-  );
-  player._weaponHandL._gun = player._weaponHandL.addChild(game.make.sprite(0, 0, 'uzi_flipped'));
-  player._weaponHandL._gun.anchor.set(0.35, 0.55);
-  player._weaponHandL._hand = player._weaponHandL.addChild(game.make.sprite(0, 0, 'convict_hand'));
-  player._weaponHandL._hand.anchor.setTo(0.5, 0.5);
-  player._weaponHandL.visible = false;
-
-  player._weaponHandL2 = player.addChild(game.make.sprite(2, 9, 'empty_convict_hand'));
-  player._weaponHandL2.anchor.setTo(0.5, 0.5);
-  player._weaponHandL2._recoilTween =
-    game.add.tween(player._weaponHandL2).to({ x: 5 }, 20, Phaser.Easing.Linear.None);
-  player._weaponHandL2._recoilTween.chain(
-    game.add.tween(player._weaponHandL2).to({ x: 2 }, 50, Phaser.Easing.Linear.None)
-  );
-  player._weaponHandL2._gun = player._weaponHandL2.addChild(game.make.sprite(0, 0, 'uzi_flipped'));
-  player._weaponHandL2._gun.anchor.set(0.35, 0.55);
-  player._weaponHandL2._hand = player._weaponHandL2.addChild(game.make.sprite(0, 0, 'convict_hand'));
-  player._weaponHandL2._hand.anchor.setTo(0.5, 0.5);
-  player._weaponHandL2.visible = false;
-
-  player._weaponHandD = player.addChild(game.make.sprite(6, 9, 'empty_convict_hand'));
-  player._weaponHandD.anchor.setTo(0.5, 0.5);
-  player._weaponHandD._recoilTween =
-    game.add.tween(player._weaponHandD).to({ y: 5 }, 20, Phaser.Easing.Linear.None);
-  player._weaponHandD._recoilTween.chain(
-    game.add.tween(player._weaponHandD).to({ y: 9 }, 50, Phaser.Easing.Linear.None)
-  );
-  player._weaponHandD._gun = player._weaponHandD.addChild(game.make.sprite(0, 0, 'uzi'));
-  player._weaponHandD._gun.anchor.set(0.35, 0.45);
-  player._weaponHandD._hand = player._weaponHandD.addChild(game.make.sprite(0, 0, 'convict_hand'));
-  player._weaponHandD._hand.anchor.setTo(0.5, 0.5);
-
-  player._weaponHandD2 = player.addChild(game.make.sprite(-2, 9, 'empty_convict_hand'));
-  player._weaponHandD2.anchor.setTo(0.5, 0.5);
-  player._weaponHandD2._recoilTween =
-    game.add.tween(player._weaponHandD2).to({ y: 5 }, 20, Phaser.Easing.Linear.None);
-  player._weaponHandD2._recoilTween.chain(
-    game.add.tween(player._weaponHandD2).to({ y: 9 }, 50, Phaser.Easing.Linear.None)
-  );
-  player._weaponHandD2._gun = player._weaponHandD2.addChild(game.make.sprite(0, 0, 'uzi'));
-  player._weaponHandD2._gun.anchor.set(0.35, 0.45);
-  player._weaponHandD2._hand = player._weaponHandD2.addChild(game.make.sprite(0, 0, 'convict_hand'));
-  player._weaponHandD2._hand.anchor.setTo(0.5, 0.5);
+  player._weaponHandD = this.makeHand(6, 9, 'D');
+  player._weaponHandD2 = this.makeHand(-2, 9, 'D');
 
   this.player._weapon.trackSprite(player._weaponHandR, 7, -3, true);
+  this.activeFlash = this.player._weaponHandR._gun._flash;
 };
 DualUziManager.prototype.initBackgroundAnims = function() {
   var player = this.player;
 
-  player._weaponHandU = player.addChild(game.make.sprite(-6, 7, 'empty_convict_hand'));
-  player._weaponHandU.anchor.setTo(0.5, 0.5);
-  player._weaponHandU._recoilTween =
-    game.add.tween(player._weaponHandU).to({ y: 10 }, 20, Phaser.Easing.Linear.None);
-  player._weaponHandU._recoilTween.chain(
-    game.add.tween(player._weaponHandU).to({ y: 7 }, 50, Phaser.Easing.Linear.None)
-  );
-  player._weaponHandU._gun = player._weaponHandU.addChild(game.make.sprite(0, 0, 'uzi'));
-  player._weaponHandU._gun.anchor.set(0.35, 0.45);
-  player._weaponHandU._hand = player._weaponHandU.addChild(game.make.sprite(0, 0, 'convict_hand'));
-  player._weaponHandU._hand.anchor.setTo(0.5, 0.5);
-
-  player._weaponHandU2 = player.addChild(game.make.sprite(1, 7, 'empty_convict_hand'));
-  player._weaponHandU2.anchor.setTo(0.5, 0.5);
-  player._weaponHandU2._recoilTween =
-    game.add.tween(player._weaponHandU2).to({ y: 10 }, 20, Phaser.Easing.Linear.None);
-  player._weaponHandU2._recoilTween.chain(
-    game.add.tween(player._weaponHandU2).to({ y: 7 }, 50, Phaser.Easing.Linear.None)
-  );
-  player._weaponHandU2._gun = player._weaponHandU2.addChild(game.make.sprite(0, 0, 'uzi'));
-  player._weaponHandU2._gun.anchor.set(0.35, 0.45);
-  player._weaponHandU2._hand = player._weaponHandU2.addChild(game.make.sprite(0, 0, 'convict_hand'));
-  player._weaponHandU2._hand.anchor.setTo(0.5, 0.5);
+  player._weaponHandU = this.makeHand(-6, 7, 'U');
+  player._weaponHandU2 = this.makeHand(1, 7, 'U');
 };
 DualUziManager.prototype.recoilWeaponHand = function(angle) {
   if (MathUtil.isDown(angle)) {
@@ -164,8 +128,10 @@ DualUziManager.prototype.update = function(angle, isVisible = true) {
       player._weaponHandD2.visible = true;
       if (this.dualWieldToggle) {
         player._weapon.trackSprite(player._weaponHandD, 10, -3, true);
+        this.activeFlash = player._weaponHandD._gun._flash;
       } else {
         player._weapon.trackSprite(player._weaponHandD2, 10, -3, true);
+        this.activeFlash = player._weaponHandD2._gun._flash;
       }
     } else if (MathUtil.isRight(angle)) {
       player._weaponHandR.rotation = angle;
@@ -174,8 +140,10 @@ DualUziManager.prototype.update = function(angle, isVisible = true) {
       player._weaponHandR2.visible = true;
       if (this.dualWieldToggle) {
         player._weapon.trackSprite(player._weaponHandR, 10, -3, true);
+        this.activeFlash = player._weaponHandR._gun._flash;
       } else {
         player._weapon.trackSprite(player._weaponHandR2, 10, -3, true);
+        this.activeFlash = player._weaponHandR2._gun._flash;
       }
     } else if (MathUtil.isUp(angle)) {
       player._weaponHandU.rotation = angle;
@@ -184,8 +152,10 @@ DualUziManager.prototype.update = function(angle, isVisible = true) {
       player._weaponHandU2.visible = true;
       if (this.dualWieldToggle) {
         player._weapon.trackSprite(player._weaponHandU, 15, -3, true);
+        this.activeFlash = player._weaponHandU._gun._flash;
       } else {
         player._weapon.trackSprite(player._weaponHandU2, 15, -3, true);
+        this.activeFlash = player._weaponHandU2._gun._flash;
       }
     } else {
       player._weaponHandL.rotation = angle;
@@ -194,8 +164,10 @@ DualUziManager.prototype.update = function(angle, isVisible = true) {
       player._weaponHandL2.visible = true;
       if (this.dualWieldToggle) {
         player._weapon.trackSprite(player._weaponHandL, 10, 3, true);
+        this.activeFlash = player._weaponHandL._gun._flash;
       } else {
         player._weapon.trackSprite(player._weaponHandL2, 10, 3, true);
+        this.activeFlash = player._weaponHandL2._gun._flash;
       }
     }
     this.fireIfDown();
@@ -216,5 +188,7 @@ DualUziManager.prototype.fireStop = function(input) {
 };
 DualUziManager.prototype.onFire = function(weapon, bullet) {
   WeaponManager.prototype.onFire.call(this, weapon, bullet);
+  this.activeFlash.revive();
+  this.activeFlash.lifespan = 70;
   this.dualWieldToggle = !this.dualWieldToggle;
 };

@@ -81,7 +81,8 @@ Player.prototype.takeDamage = function(dmg) {
   this.flashForSeconds(0.5);
 };
 Player.prototype.flash = function(isFlashing) {
-  this._main.alpha = isFlashing ? 0.3 : 1.0;
+  // this._main.alpha = isFlashing ? 0.3 : 1.0;
+  this._main.tint = isFlashing ? "0xFF0000" : "0xFFFFFF";
 };
 Player.prototype.peekState = function() {
   return this.playerStateMachine.peekState();
