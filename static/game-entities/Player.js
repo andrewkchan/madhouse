@@ -57,6 +57,9 @@ Player.prototype.addInputEvents = function() {
       s.onFireStop(this, game.input);
     }
   }, this);
+  game.input.keyboard.addKey(Phaser.KeyCode.R).onDown.add(function(e) {
+    this.weaponManager.tryReload();
+  }, this);
 };
 Player.prototype.handleInput = function(input) {
   if (this.alive) this.playerStateMachine.peekState().handleInput(input);

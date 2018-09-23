@@ -209,6 +209,14 @@ var playState = {
     this.timer_update();
     this.game_update();
     this.ownPlayerHealthWidget.displayHealth(this.ownPlayer.health);
+    var ownWeapon = this.ownPlayer.weaponManager;
+    this.ownPlayerWeaponWidget.displayAmmo(ownWeapon.currentClip, ownWeapon.reserveAmmo);
+    if (ownWeapon.reloadCountdown > 0.0) {
+      var progress = (ownWeapon.RELOAD_TIME - ownWeapon.reloadCountdown) / ownWeapon.RELOAD_TIME;
+      this.ownPlayerWeaponWidget.displayReloadProgress(progress);
+    } else {
+      this.ownPlayerWeaponWidget.displayReloadProgress(0.0);
+    }
   },
 
   //========================================================

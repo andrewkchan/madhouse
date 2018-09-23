@@ -35,6 +35,8 @@ ServerBullet.prototype.impact = function() {
 ServerBullet.prototype.collideWith = function(entity) {
   if (entity.id !== this.shooterId) {
     if (entity.constructor.name === "Player" && entity.isAlive) {
+      if (entity.currentStateName === "ROLL") return;
+      
       var e = EntityEvents.EntityTookDamageEvent.fromBullet(this, entity);
       e = entity.takeDamage(e);
       if (e) GameServer.server.broadcastEntityTookDamage(e);

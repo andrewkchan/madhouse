@@ -7,6 +7,13 @@ function WeaponManager(player, name="DefaultWeapon") {
   this.player._weapon.onFire.add(this.onFire, this);
   this.bulletFiredEvent = new LocalBulletFiredEvent(0, 0, 0, 0);
   this.name = name;
+
+  // ammo logic
+  this.RELOAD_TIME = 0.1; // reload time in seconds
+  this.reloadCountdown = 0.0; // set this to RELOAD_TIME to begin a reload
+  this.CLIP_SIZE = 1;
+  this.currentClip = this.CLIP_SIZE;
+  this.reserveAmmo = 1;
 }
 
 WeaponManager.prototype = Object.create({});
@@ -39,6 +46,14 @@ WeaponManager.prototype.fireStop = function(input) {
 };
 WeaponManager.prototype.update = function(angle, isVisible = true) {
   // override
+  if (this.reloadCountdown > 0.0) {
+    this.reloadCountdown -= game.time.physicsElapsed;
+    if (this.reloadCountdown <= 0.0) {
+      var ammoReloaded = Math.min(this.reserveAmmo, this.CLIP_SIZE - this.currentClip);
+      this.currentClip += ammoReloaded;
+      this.reserveAmmo -= ammoReloaded;
+    }
+  }
   return;
 };
 WeaponManager.prototype.onFire = function(bullet, weapon) {
@@ -51,6 +66,10 @@ WeaponManager.prototype.onFire = function(bullet, weapon) {
     // here, we can populate the bullet map with our local event.
     this.player.bulletMap[this.bulletFiredEvent.localBulletId] = bullet;
   }
+};
+WeaponManager.prototype.tryReload = function() {
+  // override
+  return;
 };
 
 WeaponManager.constructorFromWeaponName = function(weaponName) {

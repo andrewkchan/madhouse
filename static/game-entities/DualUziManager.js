@@ -9,6 +9,13 @@ function DualUziManager(player) {
   this.player._weapon.fireRate = 120; // ms between each shot in autofire mode
   this.player._weapon.bulletAngleVariance = 10; // degrees of shot spread
 
+  // ammo logic
+  this.RELOAD_TIME = 0.5; // reload time in seconds
+  this.reloadCountdown = 0.0; // set this to RELOAD_TIME to begin a reload
+  this.CLIP_SIZE = 60;
+  this.currentClip = this.CLIP_SIZE;
+  this.reserveAmmo = 300;
+
   this.dualWieldToggle = true;
   this.activeFlash = null;
 }
@@ -111,6 +118,7 @@ DualUziManager.prototype.recoilWeaponHand = function(angle) {
   }
 };
 DualUziManager.prototype.update = function(angle, isVisible = true) {
+  WeaponManager.prototype.update.call(this);
   var player = this.player;
   player._weaponHandL.visible = false;
   player._weaponHandR.visible = false;
@@ -170,14 +178,23 @@ DualUziManager.prototype.update = function(angle, isVisible = true) {
         this.activeFlash = player._weaponHandL2._gun._flash;
       }
     }
-    this.fireIfDown();
+    this.tryFireIfDown();
   }
 };
-DualUziManager.prototype.fireIfDown = function() {
-  // tiny hack to fire with 1 weapon object from 2 guns
-  if (this.player._weapon.autofire && game.input.activePointer.isDown) {
-    this.player._weapon.fireAtPointer(game.input.activePointer);
-    this.recoilWeaponHand(GameInputUtil.getCursorAngle(game.input));
+DualUziManager.prototype.tryFireIfDown = function() {
+  if (this.currentClip > 0 && this.reloadCountdown <= 0.0) {
+    // tiny hack to fire with 1 weapon object from 2 guns
+    if (this.player._weapon.autofire && game.input.activePointer.isDown) {
+      this.player._weapon.fireAtPointer(game.input.activePointer);
+      this.recoilWeaponHand(GameInputUtil.getCursorAngle(game.input));
+    }
+  } else {
+    this.fireStop();
+  }
+};
+DualUziManager.prototype.tryReload = function() {
+  if (this.reserveAmmo > 0 && this.currentClip < this.CLIP_SIZE && this.reloadCountdown <= 0.0) {
+    this.reloadCountdown = this.RELOAD_TIME;
   }
 };
 DualUziManager.prototype.fire = function(input) {
@@ -190,5 +207,6 @@ DualUziManager.prototype.onFire = function(weapon, bullet) {
   WeaponManager.prototype.onFire.call(this, weapon, bullet);
   this.activeFlash.revive();
   this.activeFlash.lifespan = 70;
+  this.currentClip -= 1;
   this.dualWieldToggle = !this.dualWieldToggle;
 };
